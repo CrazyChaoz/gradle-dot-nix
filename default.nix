@@ -36,14 +36,35 @@ let
                            ''}";
         }
     else if unique-dependency.has_module_file == "true" then
+    let
+    module-derivation = pkgs.stdenv.mkDerivation {
+                            name = unique-dependency.module_file.artifact_name;
+                            src = ./.;
+                            nativeBuildInputs = [ pkgs.python3 pkgs.python3Packages.requests ];
+                            installPhase = ''
+                                python3 ${gradle-fetcher-src}/fetch-gradle-dependency.py $out True ${unique-dependency.module_file.name} ${unique-dependency.module_file.group} ${unique-dependency.module_file.version} ${unique-dependency.module_file.artifact_name} ${unique-dependency.module_file.artifact_dir}
+                            '';
+                            outputHashAlgo = "sha256";
+                            outputHash = unique-dependency.module_file.sha_256;
+                        };
+    actual-name = pkgs.stdenv.mkDerivation {
+                         name = unique-dependency.artifact_name;
+                         src = ./.;
+                         nativeBuildInputs = [ pkgs.python3 pkgs.python3Packages.requests ];
+                         installPhase = ''
+                             python3 ${gradle-fetcher-src}/rename-module.py ${module-derivation} ${unique-dependency.artifact_name} ${unique-dependency.artifact_dir}  $out
+                         '';
+                     };
+    in
         {
-                            name = unique-dependency.artifact_dir+"/"+unique-dependency.artifact_name;
+                            name = builtins.readFile actual-name;
+
                             path = "${pkgs.stdenv.mkDerivation {
             name = unique-dependency.artifact_name;
             src = ./.;
             nativeBuildInputs = [ pkgs.python3 pkgs.python3Packages.requests  ];
             installPhase = ''
-                python3 ${gradle-fetcher-src}/fetch-gradle-dependency.py $out True ${unique-dependency.name} ${unique-dependency.group} ${unique-dependency.version} ${unique-dependency.artifact_name} ${unique-dependency.artifact_dir} ${unique-dependency.module_file.artifact_name}
+                python3 ${gradle-fetcher-src}/fetch-gradle-dependency.py $out False ${unique-dependency.name} ${unique-dependency.group} ${unique-dependency.version} ${unique-dependency.artifact_name} ${unique-dependency.artifact_dir} ${unique-dependency.module_file.artifact_name}
             '';
             outputHashAlgo = "sha256";
             outputHash = unique-dependency.sha_256;
@@ -57,12 +78,14 @@ let
             src = ./.;
             nativeBuildInputs = [ pkgs.python3 pkgs.python3Packages.requests ];
             installPhase = ''
-                python3 ${gradle-fetcher-src}/fetch-gradle-dependency.py $out False ${unique-dependency.name} ${unique-dependency.group} ${unique-dependency.version} ${unique-dependency.artifact_name} ${unique-dependency.artifact_dir}
+                python3 ${gradle-fetcher-src}/fetch-gradle-dependency.py $out True ${unique-dependency.name} ${unique-dependency.group} ${unique-dependency.version} ${unique-dependency.artifact_name} ${unique-dependency.artifact_dir}
             '';
             outputHashAlgo = "sha256";
             outputHash = unique-dependency.sha_256;
         }}";
         }
     ;
+
 in
+    #gradle-deps-json
     pkgs.linkFarm "maven-repo" (map conversion-function gradle-deps-nix.components)
