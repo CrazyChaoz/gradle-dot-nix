@@ -1,19 +1,9 @@
 import os
-import xml.etree.ElementTree as ET
 import json
 import requests
-import concurrent.futures
 import hashlib
 import sys
 
-# Parse the XML file
-tree = ET.parse('gradle/verification-metadata.xml')
-root = tree.getroot()
-
-# Define the namespaces
-namespaces = {
-    'default': 'https://schema.gradle.org/dependency-verification'
-}
 
 # List of Maven2 URLs to query
 maven_urls = [
@@ -73,11 +63,8 @@ def download_artifact(_name, _group, _version, _artifact_name, _artifact_dir):
                 failed_packages.append(f"{_group}:{_name}:{_version}")
                 print(f"\n\nERROR: Failed to download '{_artifact_name}' for {_group}:{_name}:{_version} from all Maven2 URLs !!!!\n\n")
 
-has_module_file = bool(sys.argv[2])
 
-print(f"Is module file: {has_module_file}")
-
-if not has_module_file:
+if sys.argv[2] == "True":
     output_file = sys.argv[1]
     download_artifact(sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6], sys.argv[7])
 else:
