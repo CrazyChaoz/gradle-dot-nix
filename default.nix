@@ -1,18 +1,18 @@
 { pkgs
-, src
-, gradle-fetcher-src
+, gradle-verification-metadata-file
 }:
 let
     gradle-deps-json = pkgs.stdenv.mkDerivation {
-        name = builtins.substring 11 32 ./gradle/verification-metadata.xml;
-        src = src;
+        name = builtins.substring 11 32 "${gradle-verification-metadata-file}";
+        src = ./.;
         buildInputs = [ pkgs.python3 ];
         buildPhase = ''
-            python3 ${gradle-fetcher-src}/gradle-metadata-to-json.py ./gradle/verification-metadata.xml $out
+            python3 ${gradle-fetcher-src}/gradle-metadata-to-json.py ${gradle-verification-metadata-file} $out
         '';
     };
 
     gradle-deps-nix = builtins.fromJSON (builtins.readFile gradle-deps-json);
+    gradle-fetcher-src = ./.;
 
     conversion-function = unique-dependency:
     if unique-dependency.is_added_pom_file == "true" then
@@ -87,5 +87,4 @@ let
     ;
 
 in
-    #gradle-deps-json
     pkgs.linkFarm "maven-repo" (map conversion-function gradle-deps-nix.components)
