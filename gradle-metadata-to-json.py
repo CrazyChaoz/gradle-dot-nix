@@ -86,7 +86,7 @@ def process_component(component):
         else:
             has_module_file = "false"
 
-        if pom_files.__contains__(artifact):
+        if pom_files.__contains__(artifact) and sha_256 == "0":
             is_added_pom_file = "true"
         else:
             is_added_pom_file = "false"
