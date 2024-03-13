@@ -85,5 +85,27 @@ let
       }
   ;
 
+  gradle-dependency-maven-repo = pkgs.linkFarm "maven-repo" (map conversion-function gradle-deps-nix.components);
+
+  # idea taken from https://bmcgee.ie/posts/2023/02/nix-what-are-fixed-output-derivations-and-why-use-them/
+  gradleInit = pkgs.writeText "init.gradle.kts" ''
+    settingsEvaluated {
+        pluginManagement {
+            repositories {
+                maven { url = uri("${gradle-dependency-maven-repo}") }
+            }
+        }
+        dependencyResolutionManagement {
+            repositoriesMode.set(RepositoriesMode.PREFER_PROJECT)
+            repositories {
+                maven { url = uri("${gradle-dependency-maven-repo}") }
+            }
+        }
+    }
+  '';
 in
-pkgs.linkFarm "maven-repo" (map conversion-function gradle-deps-nix.components)
+{
+  mvn-repo = gradle-dependency-maven-repo;
+  gradle-init = gradleInit;
+  gradle-deps-json = gradle-deps-json;
+}
