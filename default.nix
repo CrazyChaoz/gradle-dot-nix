@@ -63,7 +63,7 @@ let
             src = ./.;
             nativeBuildInputs = [ pkgs.python3 pkgs.python3Packages.requests  ];
             installPhase = ''
-                python3 ${gradle-fetcher-src}/fetch-gradle-dependency.py $out False ${unique-dependency.name} ${unique-dependency.group} ${unique-dependency.version} ${unique-dependency.artifact_name} ${unique-dependency.artifact_dir} ${unique-dependency.module_file.artifact_name}
+                python3 ${gradle-fetcher-src}/fetch-gradle-dependency.py $out False ${unique-dependency.name} ${unique-dependency.group} ${unique-dependency.version} ${unique-dependency.artifact_name} ${unique-dependency.artifact_dir} ${unique-dependency.sha_256} ${unique-dependency.module_file.artifact_name}
             '';
             outputHashAlgo = "sha256";
             outputHash = unique-dependency.sha_256;
@@ -77,7 +77,7 @@ let
             src = ./.;
             nativeBuildInputs = [ pkgs.python3 pkgs.python3Packages.requests ];
             installPhase = ''
-                python3 ${gradle-fetcher-src}/fetch-gradle-dependency.py $out True ${unique-dependency.name} ${unique-dependency.group} ${unique-dependency.version} ${unique-dependency.artifact_name} ${unique-dependency.artifact_dir}
+                python3 ${gradle-fetcher-src}/fetch-gradle-dependency.py $out True ${unique-dependency.name} ${unique-dependency.group} ${unique-dependency.version} ${unique-dependency.artifact_name} ${unique-dependency.artifact_dir} ${unique-dependency.sha_256}
             '';
             outputHashAlgo = "sha256";
             outputHash = unique-dependency.sha_256;
