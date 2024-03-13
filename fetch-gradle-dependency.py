@@ -57,6 +57,7 @@ def download_artifact(_name, _group, _version, _artifact_name, _artifact_dir, _s
 
             with open(output_file, "rb") as f:
                 # Read and update hash string value in blocks of 4K
+                sha256_hash = hashlib.sha256()
                 for byte_block in iter(lambda: f.read(4096), b""):
                     sha256_hash.update(byte_block)
                 # Check if the computed hash matches the given hash
