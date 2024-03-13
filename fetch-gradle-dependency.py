@@ -23,7 +23,7 @@ local_repo_dir = '/tmp/mvn-repo/'
 if not os.path.exists(local_repo_dir):
     os.makedirs(local_repo_dir)
 
-def download_artifact(_name, _group, _version, _artifact_name, _artifact_dir):
+def download_artifact(_name, _group, _version, _artifact_name, _artifact_dir, _sha256hash=None):
     # print the component details
     print(f"Downloading {_artifact_name} for {_group}:{_name}:{_version} from {_artifact_dir}")
 
@@ -55,7 +55,13 @@ def download_artifact(_name, _group, _version, _artifact_name, _artifact_dir):
                     file.write(chunk)
             print(f"\n Downloaded '{_artifact_name}' for {_group}:{_name}:{_version} from {maven_url} to local repository. \n Repo URL: {package_url}")
 
-            return
+            with open(output_file, "rb") as f:
+                # Read and update hash string value in blocks of 4K
+                for byte_block in iter(lambda: f.read(4096), b""):
+                    sha256_hash.update(byte_block)
+                # Check if the computed hash matches the given hash
+                if sha256_hash.hexdigest() == _sha256hash:
+                    return
 
         else:
             print(f"\nFailed to download '{_artifact_name}' for {_group}:{_name}:{_version} from {maven_url}.")
@@ -66,11 +72,11 @@ def download_artifact(_name, _group, _version, _artifact_name, _artifact_dir):
 
 if sys.argv[2] == "True":
     output_file = sys.argv[1]
-    download_artifact(sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6], sys.argv[7])
+    download_artifact(sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6], sys.argv[7], sys.argv[8])
 else:
     #resolve the module file first
     output_file = '/tmp/module_file.module'
-    download_artifact(sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[8], sys.argv[7])
+    download_artifact(sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[9], sys.argv[7])
     #process the component
     with open(output_file, 'r') as json_file:
         module_data = json.load(json_file)
@@ -84,4 +90,4 @@ else:
             artifact_name = renaming_aliases.get(artifact_name)
 
         output_file = sys.argv[1]
-        download_artifact(sys.argv[3], sys.argv[4], sys.argv[5], artifact_name, sys.argv[7])
+        download_artifact(sys.argv[3], sys.argv[4], sys.argv[5], artifact_name, sys.argv[7], sys.argv[8])
