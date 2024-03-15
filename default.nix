@@ -3,7 +3,7 @@ let
   gradle-fetcher-src = ./.;
 
   gradle-deps-json = pkgs.stdenv.mkDerivation {
-    name = builtins.substring 11 32 "${gradle-verification-metadata-file}";
+    name = "gradle-deps-json-derivation";
     src = ./.;
     buildInputs = [ pkgs.python3 ];
     buildPhase = ''
