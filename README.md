@@ -28,10 +28,10 @@ If you want to have a sandbox friedly maven repository, you can use the `mvn-rep
 This is useful if you already use a version of such a maven repo in your project.
 ```nix
 maven-repo = 
-    import gradle-dot-nix {
+    (import gradle-dot-nix {
         inherit pkgs;
         gradle-verification-metadata-file = ./gradle/verification-metadata.xml;
-    }.mvn-repo;
+    }).mvn-repo;
 ```
 This maven repo can be used in your `build.gradle` file like this:
 ```groovy
@@ -63,10 +63,10 @@ This is a more straightforward way to use the flake, as it does not require any 
 
 ```nix
 gradle-init-script = 
-    import gradle-dot-nix {
+    (import gradle-dot-nix {
         inherit pkgs;
         gradle-verification-metadata-file = ./gradle/verification-metadata.xml;
-    }.gradle-init;
+    }).gradle-init;
 ```
 
 This init script can be used like this:
