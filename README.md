@@ -1,7 +1,7 @@
 sandbox friendly gradle builds in nix
 ======================================
 
-This flake provides a way to build gradle projects in a sandboxed nix environments.
+This flake provides a way to build gradle projects in sandboxed nix environments.
 
 No configuration should be needed, just import the flake and use the provided outputs.
 
