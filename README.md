@@ -1,7 +1,7 @@
 sandbox friendly gradle builds in nix
 ======================================
 
-This flake provides a way to build gradle projects in a sandboxed nix environments.
+This flake provides a way to build gradle projects in sandboxed nix environments.
 
 No configuration should be needed, just import the flake and use the provided outputs.
 
@@ -20,6 +20,29 @@ gradle -M sha256 build
 This will generate a `gradle/verification-metadata.xml` file that contains the sha256 hashes of all the dependencies used in the build.
 
 Note: I have not tried it with more custom `verification-metadata.xml` files, so I cannot guarantee that it will work with those. If you run into any such problem please open an issue.
+
+
+### Gradle init script
+
+There is a `gradle-init` output that can be used to create a gradle init script.
+This is a more straightforward way to use the flake, as it does not require any configuration in the actual project.
+
+```nix
+gradle-init-script = 
+    (import gradle-dot-nix {
+        inherit pkgs;
+        gradle-verification-metadata-file = ./gradle/verification-metadata.xml;
+    }).gradle-init;
+```
+
+This init script can be used like this:
+```sh
+gradle -I ${gradle-init-script} build
+```
+
+There should be no need to modify any files in the project to use this.
+The generated init script will automatically set the maven repository for the project and remove `repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)` from the settings.
+
 
 ### Maven repository
 
@@ -55,27 +78,6 @@ And then you can build your project with the following command:
 ```sh
 gradle -PnixMavenRepo=${maven-repo} build
 ```
-
-### Gradle init script
-
-There is also a `gradle-init` output that can be used to create a gradle init script.
-This is a more straightforward way to use the flake, as it does not require any configuration in the actual project.
-
-```nix
-gradle-init-script = 
-    (import gradle-dot-nix {
-        inherit pkgs;
-        gradle-verification-metadata-file = ./gradle/verification-metadata.xml;
-    }).gradle-init;
-```
-
-This init script can be used like this:
-```sh
-gradle -I ${gradle-init-script} build
-```
-
-There should be no need to modify any files in the project to use this.
-The generated init script will automatically set the maven repository for the project and remove `repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)` from the settings.
 
 Sample Project
 ---
