@@ -24,6 +24,7 @@ let
   #
   # if we set the is_added_pom_file attribute to true, we can just create a file with the pom content
   # this is done, because sometimes there are dependencies which are missing their pom file in the metadata file, but gradle complains if they're missing
+  # taken from: https://gist.github.com/tadfisher/17000caf8653019a9a98fd9b9b921d93#file-maven-repo-nix
   #
   # if we set the has_module_file attribute to true, we need to fetch the module file and rename it to the artifact name
   # this is done because sometimes ther is renaming happening in the module file, which is not reflected in the metadata file
