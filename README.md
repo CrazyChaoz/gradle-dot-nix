@@ -5,6 +5,8 @@ This flake provides a way to build gradle projects in sandboxed nix environments
 
 No configuration should be needed, just import the flake and use the provided outputs.
 
+Yes there are still IFDs left in the code.
+
 Usage
 ---
 
