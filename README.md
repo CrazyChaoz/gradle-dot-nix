@@ -99,8 +99,13 @@ I don't have any motivation to do that myself, but I would be happy to accept a 
 
 A starting point for that would be to convert the python scripts to bash scripts, as they are self-contained and don't do too much magic.
 
+Structure
+---
+
+<img src="https://github.com/CrazyChaoz/gradle-dot-nix/assets/19308955/11412b5f-9cb9-4f72-8569-7561611a9d7b" width="60%" />
 
 License
 ---
 
 This flake is licensed under the MIT license. See the [LICENSE](./LICENSE) file for details.
+
