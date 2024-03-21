@@ -73,14 +73,6 @@ let
           outputHashAlgo = "sha256";
           outputHash = unique-dependency.module_file.sha_256;
         };
-        actual-name = pkgs.stdenv.mkDerivation {
-          name = unique-dependency.artifact_name;
-          src = ./.;
-          nativeBuildInputs = [ pkgs.python3 ];
-          installPhase = ''
-            python3 rename-module.py ${module-derivation} ${unique-dependency.artifact_name} ${unique-dependency.artifact_dir}  $out
-          '';
-        };
         actual-file = pkgs.stdenv.mkDerivation {
           name = unique-dependency.artifact_name;
           src = ./.;
@@ -95,8 +87,9 @@ let
       pkgs.stdenv.mkDerivation {
         name = unique-dependency.artifact_name;
         src = ./.;
+        nativeBuildInputs = [ pkgs.python3 ];
         installPhase = ''
-          INTERNAL_PATH=`cat ${actual-name}`
+          INTERNAL_PATH=`python3 rename-module.py ${module-derivation} ${unique-dependency.artifact_name} ${unique-dependency.artifact_dir}`
           directory=$out/$(dirname "$INTERNAL_PATH")
           mkdir -p $directory
 

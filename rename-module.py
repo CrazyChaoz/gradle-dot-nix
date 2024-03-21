@@ -17,5 +17,4 @@ with open(module_file, 'r') as json_file:
 
         artifact_name = os.path.join(sys.argv[3], artifact_name)
 
-        with open(os.path.join(sys.argv[4]), 'w') as output_file:
-            output_file.write(artifact_name)
+        print(artifact_name)
