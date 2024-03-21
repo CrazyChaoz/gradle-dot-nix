@@ -1,17 +1,13 @@
 { pkgs, gradle-verification-metadata-file }:
 let
-
-  #if we decide to use different paths for the fetcher, we can change it here
-  gradle-fetcher-src = ./.;
-
   # we need to convert the gradle metadata to json
   # this json data is completely static and can be used to fetch the dependencies
   gradle-deps-json = pkgs.stdenv.mkDerivation {
-    name = builtins.substring 11 32 "${gradle-verification-metadata-file}";
+    name = "gradle-deps-json";
     src = ./.;
     buildInputs = [ pkgs.python3 ];
     buildPhase = ''
-      python3 ${gradle-fetcher-src}/gradle-metadata-to-json.py ${gradle-verification-metadata-file} $out
+      python3 gradle-metadata-to-json.py ${gradle-verification-metadata-file} $out
     '';
   };
 
@@ -37,24 +33,33 @@ let
   # this is only done for .module files, because they are never renamed
   conversion-function = unique-dependency:
     if unique-dependency.is_added_pom_file == "true" then
-      {
-        name = unique-dependency.artifact_dir + "/" + unique-dependency.artifact_name;
-        path = "${pkgs.writeText unique-dependency.artifact_name ''
-                             <project xmlns="http://maven.apache.org/POM/4.0.0"
-                                      xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-                                      http://maven.apache.org/xsd/maven-4.0.0.xsd"
-                                      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-                               <!-- This module was also published with a richer model, Gradle metadata,  -->
-                               <!-- which should be used instead. Do not delete the following line which  -->
-                               <!-- is to indicate to Gradle or any Gradle module metadata file consumer  -->
-                               <!-- that they should prefer consuming it instead. -->
-                               <!-- do_not_remove: published-with-gradle-metadata -->
-                               <modelVersion>4.0.0</modelVersion>
-                               <groupId>${unique-dependency.group}</groupId>
-                               <artifactId>${unique-dependency.name}</artifactId>
-                               <version>${unique-dependency.version}</version>
-                             </project>
-                           ''}";
+      let
+        actual-file = pkgs.writeText unique-dependency.artifact_name ''
+          <project xmlns="http://maven.apache.org/POM/4.0.0"
+                   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                   http://maven.apache.org/xsd/maven-4.0.0.xsd"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+            <!-- This module was also published with a richer model, Gradle metadata,  -->
+            <!-- which should be used instead. Do not delete the following line which  -->
+            <!-- is to indicate to Gradle or any Gradle module metadata file consumer  -->
+            <!-- that they should prefer consuming it instead. -->
+            <!-- do_not_remove: published-with-gradle-metadata -->
+            <modelVersion>4.0.0</modelVersion>
+            <groupId>${unique-dependency.group}</groupId>
+            <artifactId>${unique-dependency.name}</artifactId>
+            <version>${unique-dependency.version}</version>
+          </project>
+        '';
+      in
+      pkgs.stdenv.mkDerivation {
+        name = unique-dependency.artifact_name;
+        src = ./.;
+        INTERNAL_PATH = unique-dependency.artifact_dir + "/" + unique-dependency.artifact_name;
+        installPhase = ''
+          directory=$out/$(dirname "$INTERNAL_PATH")
+          mkdir -p $directory
+          cp ${actual-file} $out/$INTERNAL_PATH
+        '';
       }
     else if unique-dependency.has_module_file == "true" then
       let
@@ -63,7 +68,7 @@ let
           src = ./.;
           nativeBuildInputs = [ pkgs.python3 pkgs.python3Packages.requests ];
           installPhase = ''
-            python3 ${gradle-fetcher-src}/fetch-gradle-dependency.py $out True ${unique-dependency.module_file.name} ${unique-dependency.module_file.group} ${unique-dependency.module_file.version} ${unique-dependency.module_file.artifact_name} ${unique-dependency.module_file.artifact_dir} ${unique-dependency.module_file.sha_256}
+            python3 fetch-gradle-dependency.py $out True ${unique-dependency.module_file.name} ${unique-dependency.module_file.group} ${unique-dependency.module_file.version} ${unique-dependency.module_file.artifact_name} ${unique-dependency.module_file.artifact_dir} ${unique-dependency.module_file.sha_256}
           '';
           outputHashAlgo = "sha256";
           outputHash = unique-dependency.module_file.sha_256;
@@ -71,41 +76,59 @@ let
         actual-name = pkgs.stdenv.mkDerivation {
           name = unique-dependency.artifact_name;
           src = ./.;
-          nativeBuildInputs = [ pkgs.python3 pkgs.python3Packages.requests ];
+          nativeBuildInputs = [ pkgs.python3 ];
           installPhase = ''
-            python3 ${gradle-fetcher-src}/rename-module.py ${module-derivation} ${unique-dependency.artifact_name} ${unique-dependency.artifact_dir}  $out
+            python3 rename-module.py ${module-derivation} ${unique-dependency.artifact_name} ${unique-dependency.artifact_dir}  $out
           '';
         };
+        actual-file = pkgs.stdenv.mkDerivation {
+          name = unique-dependency.artifact_name;
+          src = ./.;
+          nativeBuildInputs = [ pkgs.python3 pkgs.python3Packages.requests ];
+          installPhase = ''
+            python3 fetch-gradle-dependency.py $out False ${unique-dependency.name} ${unique-dependency.group} ${unique-dependency.version} ${unique-dependency.artifact_name} ${unique-dependency.artifact_dir} ${unique-dependency.sha_256} ${unique-dependency.module_file.artifact_name}
+          '';
+          outputHashAlgo = "sha256";
+          outputHash = unique-dependency.sha_256;
+        };
       in
-      {
-        name = builtins.readFile actual-name;
+      pkgs.stdenv.mkDerivation {
+        name = unique-dependency.artifact_name;
+        src = ./.;
+        installPhase = ''
+          INTERNAL_PATH=`cat ${actual-name}`
+          directory=$out/$(dirname "$INTERNAL_PATH")
+          mkdir -p $directory
 
-        path = "${pkgs.stdenv.mkDerivation {
-            name = unique-dependency.artifact_name;
-            src = ./.;
-            nativeBuildInputs = [ pkgs.python3 pkgs.python3Packages.requests  ];
-            installPhase = ''
-                python3 ${gradle-fetcher-src}/fetch-gradle-dependency.py $out False ${unique-dependency.name} ${unique-dependency.group} ${unique-dependency.version} ${unique-dependency.artifact_name} ${unique-dependency.artifact_dir} ${unique-dependency.sha_256} ${unique-dependency.module_file.artifact_name}
-            '';
-            outputHashAlgo = "sha256";
-            outputHash = unique-dependency.sha_256;
-        }}";
+          cp ${actual-file} $out/$INTERNAL_PATH
+        '';
       }
     else
-      {
-        name = unique-dependency.artifact_dir + "/" + unique-dependency.artifact_name;
-        path = "${pkgs.stdenv.mkDerivation {
-            name = unique-dependency.artifact_name;
-            src = ./.;
-            nativeBuildInputs = [ pkgs.python3 pkgs.python3Packages.requests ];
-            installPhase = ''
-                python3 ${gradle-fetcher-src}/fetch-gradle-dependency.py $out True ${unique-dependency.name} ${unique-dependency.group} ${unique-dependency.version} ${unique-dependency.artifact_name} ${unique-dependency.artifact_dir} ${unique-dependency.sha_256}
-            '';
-            outputHashAlgo = "sha256";
-            outputHash = unique-dependency.sha_256;
-        }}";
+      let
+        actual-file = pkgs.stdenv.mkDerivation {
+          name = unique-dependency.artifact_name;
+          src = ./.;
+          nativeBuildInputs = [ pkgs.python3 pkgs.python3Packages.requests ];
+          installPhase = ''
+            python3 fetch-gradle-dependency.py $out True ${unique-dependency.name} ${unique-dependency.group} ${unique-dependency.version} ${unique-dependency.artifact_name} ${unique-dependency.artifact_dir} ${unique-dependency.sha_256}
+          '';
+          outputHashAlgo = "sha256";
+          outputHash = unique-dependency.sha_256;
+        };
+      in
+      pkgs.stdenv.mkDerivation {
+        name = unique-dependency.artifact_name;
+        src = ./.;
+        INTERNAL_PATH = unique-dependency.artifact_dir + "/" + unique-dependency.artifact_name;
+        installPhase = ''
+          directory=$out/$(dirname "$INTERNAL_PATH")
+          mkdir -p $directory
+          cp ${actual-file} $out/$INTERNAL_PATH
+        '';
       }
   ;
+
+
 
   # this is where all the dependencies are collected into a single repository
   # the pkgs.linkFarm function takes an array of attribute sets
@@ -114,7 +137,7 @@ let
   # --> * path: the actual path to the derivation
   # the output of this function is a single derivation which contains all the dependencies
   # the input is the array of the nixified dependencies, which are fed into the conversion function
-  gradle-dependency-maven-repo = pkgs.linkFarm "maven-repo" (map conversion-function gradle-deps-nix.components);
+  gradle-dependency-maven-repo = pkgs.symlinkJoin { name= "maven-repo"; paths = (map conversion-function gradle-deps-nix.components); postBuild = "echo maven repo built"; };
 
   # idea taken from https://bmcgee.ie/posts/2023/02/nix-what-are-fixed-output-derivations-and-why-use-them/
   # gradle has a huge disliking for self fetched dependencies
