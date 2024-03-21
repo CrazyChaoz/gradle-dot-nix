@@ -130,7 +130,7 @@ let
   # --> * path: the actual path to the derivation
   # the output of this function is a single derivation which contains all the dependencies
   # the input is the array of the nixified dependencies, which are fed into the conversion function
-  gradle-dependency-maven-repo = pkgs.symlinkJoin { name = "maven-repo"; paths = (map conversion-function gradle-deps-nix.components); postBuild = "echo maven repo built"; };
+  gradle-dependency-maven-repo = pkgs.symlinkJoin { name = "maven-repo"; paths = (map conversion-function gradle-deps-nix.components); postBuild = "echo maven repository was built"; };
 
   # idea taken from https://bmcgee.ie/posts/2023/02/nix-what-are-fixed-output-derivations-and-why-use-them/
   # gradle has a huge disliking for self fetched dependencies
@@ -154,7 +154,6 @@ let
   # we create a file called init.gradle.kts
   # it changes the project settings (settings.gradle.kts or settings.gradle) to use our repository
   # i'm not sure if we also need repositoriesMode.set(RepositoriesMode.PREFER_PROJECT), but it surely helps
-
   gradleInit = pkgs.writeText "init.gradle.kts" ''
     settingsEvaluated {
         pluginManagement {
