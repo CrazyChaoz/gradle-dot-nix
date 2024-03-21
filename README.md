@@ -102,7 +102,7 @@ A starting point for that would be to convert the python scripts to bash scripts
 Structure
 ---
 
-<img src="https://github.com/CrazyChaoz/gradle-dot-nix/assets/19308955/6cd9ebba-2945-47df-978c-1764a1018c2d" width="60%" />
+<img src="https://github.com/CrazyChaoz/gradle-dot-nix/assets/19308955/341d89d6-6e80-4f44-a08a-7391584af474" width="45%" />
 
 
 License
