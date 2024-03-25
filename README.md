@@ -5,7 +5,13 @@ This flake provides a way to build gradle projects in sandboxed nix environments
 
 No configuration should be needed, just import the flake and use the provided outputs.
 
-Yes there are still IFDs left in the code.
+Yes there are still IFDs left in the code. 
+If you have any idea how to get rid of them, please let me know or open a PR.
+
+Sample Project
+---
+
+A sample project that uses this flake can be found [here](https://github.com/CrazyChaoz/Minimal-Android-UWB-App).
 
 Usage
 ---
@@ -81,11 +87,6 @@ And then you can build your project with the following command:
 gradle -PnixMavenRepo=${maven-repo} build
 ```
 
-Sample Project
----
-
-A sample project that uses this flake can be found [here](https://github.com/CrazyChaoz/Minimal-Android-UWB-App).
-
 
 Implementation Details
 ---
@@ -104,6 +105,18 @@ Structure
 
 <img src="https://github.com/CrazyChaoz/gradle-dot-nix/assets/19308955/341d89d6-6e80-4f44-a08a-7391584af474" width="45%" />
 
+Special Thanks
+---
+
+- [Tad Fisher](https://github.com/tadfisher) for providing a [gist](https://gist.github.com/tadfisher/17000caf8653019a9a98fd9b9b921d93) that cleared up some doubts I had (and some code I stole).
+- [Brian McGee](https://bmcgee.ie/) for providing a [blog post](https://bmcgee.ie/posts/2023/02/nix-what-are-fixed-output-derivations-and-why-use-them/) that gave me the idea to use a gradle init script.
+- [Martin Schwaighofer](https://github.com/mschwaig) for teaching me the basics of nix and for providing valuable feedback to get the project working.
+
+Acknowledgment
+---
+
+_This work has been carried out within the scope of Digidow, the Christian Doppler Laboratory for Private Digital Authentication in the Physical World and has partially been supported by the LIT Secure and Correct Systems Lab. 
+We gratefully acknowledge financial support by the Austrian Federal Ministry of Labour and Economy, the National Foundation for Research, Technology and Development, the Christian Doppler Research Association, 3 Banken IT GmbH, ekey biometric systems GmbH, Kepler Universitätsklinikum GmbH, NXP Semiconductors Austria GmbH & Co KG, Österreichische Staatsdruckerei GmbH, and the State of Upper Austria._
 
 License
 ---
