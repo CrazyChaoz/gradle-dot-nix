@@ -108,7 +108,7 @@ Structure
 Special Thanks
 ---
 
-- [Tad Fisher](https://github.com/tadfisher) for providing a [gist](https://gist.github.com/tadfisher/17000caf8653019a9a98fd9b9b921d93) that cleared up some doubts I had (and some code I stole).
+- [Tad Fisher](https://github.com/tadfisher) for providing a [gist](https://gist.github.com/tadfisher/17000caf8653019a9a98fd9b9b921d93) that cleared up some questions I had (and some code I stole).
 - [Brian McGee](https://bmcgee.ie/) for providing a [blog post](https://bmcgee.ie/posts/2023/02/nix-what-are-fixed-output-derivations-and-why-use-them/) that gave me the idea to use a gradle init script.
 - [Martin Schwaighofer](https://github.com/mschwaig) for teaching me the basics of nix and for providing valuable feedback to get the project working.
 
