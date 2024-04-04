@@ -2,27 +2,10 @@ import os
 import xml.etree.ElementTree as ET
 import sys
 
-# Parse the XML file
-tree = ET.parse(sys.argv[1])
-root = tree.getroot()
-
 # Define the namespaces
 namespaces = {
     'default': 'https://schema.gradle.org/dependency-verification'
 }
-
-# List of Maven2 URLs to query
-maven_urls = [
-    "https://dl.google.com/dl/android/maven2",
-    "https://repo.maven.apache.org/maven2",
-    "https://plugins.gradle.org/m2",
-    "https://maven.google.com"
-]
-
-# List of failed Packages
-failed_packages = []
-
-num_components = len(root.findall('.//default:component', namespaces))
 
 def process_component(component):
     global downloaded_components
@@ -122,7 +105,7 @@ output_file.write('''
 ''')
 
 # Iterate through the components using numbered index
-components = root.findall('.//default:component', namespaces)
+components = ET.parse(sys.argv[1]).getroot().findall('.//default:component', namespaces)
 for i, _component in enumerate(components):
     process_component(_component)
 
