@@ -4,7 +4,6 @@ import requests
 import hashlib
 import sys
 
-
 # List of Maven2 URLs to query
 maven_urls = [
     "https://dl.google.com/dl/android/maven2",
@@ -12,9 +11,6 @@ maven_urls = [
     "https://plugins.gradle.org/m2",
     "https://maven.google.com"
 ]
-
-# List of failed Packages
-failed_packages = []
 
 # Local directory for storing artifacts
 local_repo_dir = '/tmp/mvn-repo/'
@@ -67,7 +63,6 @@ def download_artifact(_name, _group, _version, _artifact_name, _artifact_dir, _s
         else:
             print(f"\nFailed to download '{_artifact_name}' for {_group}:{_name}:{_version} from {maven_url}.")
             if attempts == len(maven_urls):
-                failed_packages.append(f"{_group}:{_name}:{_version}")
                 print(f"\n\nERROR: Failed to download '{_artifact_name}' for {_group}:{_name}:{_version} from all Maven2 URLs !!!!\n\n")
 
 
