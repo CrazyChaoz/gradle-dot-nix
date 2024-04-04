@@ -3,7 +3,8 @@ import requests
 import hashlib
 import sys
 
-def download_artifact(_output_file, unprotected_maven_urls, _name, _group, _version, _artifact_name, _artifact_dir,
+
+def download_artifact(_output_file, unprotected_maven_url_file, _name, _group, _version, _artifact_name, _artifact_dir,
                       _sha256hash=None):
     """
     Download the artifact from the Maven2 repository
@@ -26,40 +27,42 @@ def download_artifact(_output_file, unprotected_maven_urls, _name, _group, _vers
     component_identifier = f"{_group.replace('.', '/')}/{_name}/{_version}/{_artifact_name}"
 
     # Iterate through Maven2 URLs
-    for maven_url in  json.load(unprotected_maven_urls):
-        # Increment the number of attempts
-        attempts += 1
+    with open(unprotected_maven_url_file, 'r') as unprotected_maven_url_file:
+        maven_urls = json.load(unprotected_maven_url_file)
+        for maven_url in maven_urls:
+            # Increment the number of attempts
+            attempts += 1
 
-        # Construct the Maven2 URL for the current component
-        package_url = f"{maven_url}/{component_identifier}"
+            # Construct the Maven2 URL for the current component
+            package_url = f"{maven_url}/{component_identifier}"
 
-        print(f"Attempting to download {_artifact_name} for {_group}:{_name}:{_version} from {package_url}")
+            print(f"Attempting to download {_artifact_name} for {_group}:{_name}:{_version} from {package_url}")
 
-        # Download the package
-        response = requests.get(package_url, stream=True)
+            # Download the package
+            response = requests.get(package_url, stream=True)
 
-        if response.status_code == 200:
+            if response.status_code == 200:
 
-            with open(_output_file, 'wb') as _file:
-                for chunk in response.iter_content(chunk_size=128):
-                    _file.write(chunk)
-            print(
-                f"\n Downloaded '{_artifact_name}' for {_group}:{_name}:{_version} from {maven_url} to local repository. \n Repo URL: {package_url}")
-
-            with open(_output_file, "rb") as f:
-                # Read and update hash string value in blocks of 4K
-                sha256_hash = hashlib.sha256()
-                for byte_block in iter(lambda: f.read(4096), b""):
-                    sha256_hash.update(byte_block)
-                # Check if the computed hash matches the given hash
-                if sha256_hash.hexdigest() == _sha256hash:
-                    return
-
-        else:
-            print(f"\nFailed to download '{_artifact_name}' for {_group}:{_name}:{_version} from {maven_url}.")
-            if attempts == len(unprotected_maven_urls):
+                with open(_output_file, 'wb') as _file:
+                    for chunk in response.iter_content(chunk_size=128):
+                        _file.write(chunk)
                 print(
-                    f"\n\nERROR: Failed to download '{_artifact_name}' for {_group}:{_name}:{_version} from all Maven2 URLs !!!!\n\n")
+                    f"\n Downloaded '{_artifact_name}' for {_group}:{_name}:{_version} from {maven_url} to local repository. \n Repo URL: {package_url}")
+
+                with open(_output_file, "rb") as f:
+                    # Read and update hash string value in blocks of 4K
+                    sha256_hash = hashlib.sha256()
+                    for byte_block in iter(lambda: f.read(4096), b""):
+                        sha256_hash.update(byte_block)
+                    # Check if the computed hash matches the given hash
+                    if sha256_hash.hexdigest() == _sha256hash:
+                        return
+
+            else:
+                print(f"\nFailed to download '{_artifact_name}' for {_group}:{_name}:{_version} from {maven_url}.")
+                if attempts == len(maven_urls):
+                    print(
+                        f"\n\nERROR: Failed to download '{_artifact_name}' for {_group}:{_name}:{_version} from all Maven2 URLs !!!!\n\n")
 
 
 if sys.argv[2] == "fetch-module":
@@ -67,8 +70,7 @@ if sys.argv[2] == "fetch-module":
                       sys.argv[9])
 else:
     # resolve the module file first
-    download_artifact('/tmp/module_file.module', sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[9], sys.argv[7],
-                      sys.argv[8])
+    download_artifact('/tmp/module_file.module', sys.argv[3], sys.argv[4], sys.argv[5],sys.argv[6], sys.argv[10], sys.argv[8])
     # process the component
     with open('/tmp/module_file.module', 'r') as json_file:
         module_data = json.load(json_file)
@@ -77,9 +79,9 @@ else:
             for file in variant.get('files', []):
                 renaming_aliases[file['name']] = file['url']
 
-        artifact_name = sys.argv[6]
+        artifact_name = sys.argv[7]
         if renaming_aliases.get(artifact_name):
             artifact_name = renaming_aliases.get(artifact_name)
 
-        download_artifact(sys.argv[1], sys.argv[3], sys.argv[4], sys.argv[5], artifact_name, sys.argv[7], sys.argv[8],
+        download_artifact(sys.argv[1], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6], artifact_name, sys.argv[8],
                           sys.argv[9])

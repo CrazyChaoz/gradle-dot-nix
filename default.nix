@@ -1,4 +1,14 @@
-{ pkgs, gradle-verification-metadata-file }:
+{   pkgs,
+    gradle-verification-metadata-file,
+    unprotected-maven-repos ? pkgs.writeText "unprotected-maven-repos.json" ''
+        [
+            "https://dl.google.com/dl/android/maven2",
+            "https://repo.maven.apache.org/maven2",
+            "https://plugins.gradle.org/m2",
+            "https://maven.google.com"
+        ]
+      ''
+}:
 let
   # we need to convert the gradle metadata to json
   # this json data is completely static and can be used to fetch the dependencies
@@ -14,14 +24,7 @@ let
   # we need to convert the json data to data that nix understands
   gradle-deps-nix = builtins.fromJSON (builtins.readFile gradle-deps-json);
 
-  unprotected-maven-repos = pkgs.writeText "unprotected-maven-repos" ''
-    [
-        "https://dl.google.com/dl/android/maven2",
-        "https://repo.maven.apache.org/maven2",
-        "https://plugins.gradle.org/m2",
-        "https://maven.google.com"
-    ]
-  '';
+
 
   # the central conversion function
   # it takes one dependency description (a nix attribute set) and converts it to a nix derivation
