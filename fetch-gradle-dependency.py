@@ -2,6 +2,7 @@ import json
 import requests
 import hashlib
 import sys
+import os
 
 
 def download_artifact(_output_file, unprotected_maven_url_file, _name, _group, _version, _artifact_name, _artifact_dir,
@@ -68,10 +69,13 @@ def download_artifact(_output_file, unprotected_maven_url_file, _name, _group, _
 if sys.argv[2] == "fetch-module":
     download_artifact(sys.argv[1], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6], sys.argv[7], sys.argv[8], sys.argv[9])
 else:
+    tmpdir = r'tmp' 
+    if not os.path.exists(tmpdir):
+      os.makedirs(tmpdir)
     # resolve the module file first
-    download_artifact('/tmp/module_file.module', sys.argv[3], sys.argv[4], sys.argv[5],sys.argv[6], sys.argv[10], sys.argv[8])
+    download_artifact('tmp/module_file.module', sys.argv[3], sys.argv[4], sys.argv[5],sys.argv[6], sys.argv[10], sys.argv[8])
     # process the component
-    with open('/tmp/module_file.module', 'r') as json_file:
+    with open('tmp/module_file.module', 'r') as json_file:
         module_data = json.load(json_file)
         renaming_aliases = {}
         for variant in module_data.get('variants', []):
