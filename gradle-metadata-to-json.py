@@ -1,6 +1,6 @@
 import os
-import xml.etree.ElementTree as ET
 import sys
+from xml.etree import ElementTree
 
 # Define the namespaces
 namespaces = {
@@ -8,7 +8,6 @@ namespaces = {
 }
 
 def process_component(component):
-    global downloaded_components
     group = component.attrib['group']
     name = component.attrib['name']
     version = component.attrib['version']
@@ -105,7 +104,7 @@ output_file.write('''
 ''')
 
 # Iterate through the components using numbered index
-components = ET.parse(sys.argv[1]).getroot().findall('.//default:component', namespaces)
+components = ElementTree.parse(sys.argv[1]).getroot().findall('.//default:component', namespaces)
 for i, _component in enumerate(components):
     process_component(_component)
 

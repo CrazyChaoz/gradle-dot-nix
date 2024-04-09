@@ -10,7 +10,7 @@ def download_artifact(_output_file, unprotected_maven_url_file, _name, _group, _
     Download the artifact from the Maven2 repository
 
     :param _output_file: The output file path, is the nix $out variable
-    :param unprotected_maven_urls: The JSON-string list of unprotected Maven2 URLs
+    :param unprotected_maven_url_file: The JSON-string list of unprotected Maven2 URLs
     :param _name: The name of the component
     :param _group: The group of the component
     :param _version: The version of the component
@@ -66,8 +66,7 @@ def download_artifact(_output_file, unprotected_maven_url_file, _name, _group, _
 
 
 if sys.argv[2] == "fetch-module":
-    download_artifact(sys.argv[1], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6], sys.argv[7], sys.argv[8],
-                      sys.argv[9])
+    download_artifact(sys.argv[1], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6], sys.argv[7], sys.argv[8], sys.argv[9])
 else:
     # resolve the module file first
     download_artifact('/tmp/module_file.module', sys.argv[3], sys.argv[4], sys.argv[5],sys.argv[6], sys.argv[10], sys.argv[8])
@@ -83,5 +82,4 @@ else:
         if renaming_aliases.get(artifact_name):
             artifact_name = renaming_aliases.get(artifact_name)
 
-        download_artifact(sys.argv[1], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6], artifact_name, sys.argv[8],
-                          sys.argv[9])
+        download_artifact(sys.argv[1], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6], artifact_name, sys.argv[8], sys.argv[9])
