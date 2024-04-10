@@ -88,6 +88,33 @@ gradle -PnixMavenRepo=${maven-repo} build
 ```
 
 
+### Custom Public Repositories
+
+If you don't want to use the standard repositories gradle uses, you can set the optional `public-maven-repos` input to a JSON array that contains the repositories you want to query.
+
+```nix 
+
+gradle-dot-nix-instance = 
+    import gradle-dot-nix {
+        inherit pkgs;
+        gradle-verification-metadata-file = ./gradle/verification-metadata.xml;
+        public-maven-repos = ''        
+        [
+            "https://dl.google.com/dl/android/maven2",
+            "https://repo.maven.apache.org/maven2",
+            "https://plugins.gradle.org/m2",
+            "https://maven.google.com"
+        ]
+        '';
+    };
+```
+
+### Private Repositories (WIP)
+
+Implementing proper support for private repositories is a bit more complex, as the credentials should not be leaked into the nix store.
+
+The current plan is to use the maven standard [`settings.xml` file](https://maven.apache.org/settings.html#servers) to configure the repositories, and to give the content of that via an impure environment variable to the fetcher.
+
 Implementation Details
 ---
 
@@ -99,6 +126,16 @@ The python scripts are not very complex and should be easy to understand nixify 
 I don't have any motivation to do that myself, but I would be happy to accept a PR that does that.
 
 A starting point for that would be to convert the python scripts to bash scripts, as they are self-contained and don't do too much magic.
+
+IFDs
+---
+
+There are several IFDs that (need to?) exist in the code.
+
+1. The `gradle/verification-metadata.xml` file gets read to determine the further derivations.
+There shouldn't be a way around this, as the dependencies are variable and the derivations thus need to be determined at runtime.
+2. `nixpkgs.symlinkJoin` collects multiple store paths into one.
+Store paths are not known before evaluation and need to be determined at runtime.
 
 Structure
 ---

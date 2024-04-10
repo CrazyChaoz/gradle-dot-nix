@@ -1,6 +1,6 @@
 {   pkgs,
     gradle-verification-metadata-file,
-    unprotected-maven-repos ? ''
+    public-maven-repos ? ''
         [
             "https://dl.google.com/dl/android/maven2",
             "https://repo.maven.apache.org/maven2",
@@ -25,7 +25,7 @@ let
   gradle-deps-nix = builtins.fromJSON (builtins.readFile gradle-deps-json);
 
 
-  unprotected-maven-repo-file = pkgs.writeText "unprotected-maven-repos.json" unprotected-maven-repos;
+  public-maven-repos-file = pkgs.writeText "public-maven-repos.json" public-maven-repos;
 
   # the central conversion function
   # it takes one dependency description (a nix attribute set) and converts it to a nix derivation
@@ -81,7 +81,7 @@ let
           src = ./.;
           nativeBuildInputs = [ pkgs.python3 pkgs.python3Packages.requests ];
           installPhase = ''
-            python3 fetch-gradle-dependency.py $out fetch-module ${unprotected-maven-repo-file} ${unique-dependency.module_file.name} ${unique-dependency.module_file.group} ${unique-dependency.module_file.version} ${unique-dependency.module_file.artifact_name} ${unique-dependency.module_file.artifact_dir} ${unique-dependency.module_file.sha_256}
+            python3 fetch-gradle-dependency.py $out fetch-module ${public-maven-repos-file} ${unique-dependency.module_file.name} ${unique-dependency.module_file.group} ${unique-dependency.module_file.version} ${unique-dependency.module_file.artifact_name} ${unique-dependency.module_file.artifact_dir} ${unique-dependency.module_file.sha_256}
           '';
           outputHashAlgo = "sha256";
           outputHash = unique-dependency.module_file.sha_256;
@@ -91,7 +91,7 @@ let
           src = ./.;
           nativeBuildInputs = [ pkgs.python3 pkgs.python3Packages.requests ];
           installPhase = ''
-            python3 fetch-gradle-dependency.py $out fetch-file ${unprotected-maven-repo-file} ${unique-dependency.name} ${unique-dependency.group} ${unique-dependency.version} ${unique-dependency.artifact_name} ${unique-dependency.artifact_dir} ${unique-dependency.sha_256} ${unique-dependency.module_file.artifact_name}
+            python3 fetch-gradle-dependency.py $out fetch-file ${public-maven-repos-file} ${unique-dependency.name} ${unique-dependency.group} ${unique-dependency.version} ${unique-dependency.artifact_name} ${unique-dependency.artifact_dir} ${unique-dependency.sha_256} ${unique-dependency.module_file.artifact_name}
           '';
           outputHashAlgo = "sha256";
           outputHash = unique-dependency.sha_256;
@@ -116,7 +116,7 @@ let
           src = ./.;
           nativeBuildInputs = [ pkgs.python3 pkgs.python3Packages.requests ];
           installPhase = ''
-            python3 fetch-gradle-dependency.py $out fetch-module ${unprotected-maven-repo-file} ${unique-dependency.name} ${unique-dependency.group} ${unique-dependency.version} ${unique-dependency.artifact_name} ${unique-dependency.artifact_dir} ${unique-dependency.sha_256}
+            python3 fetch-gradle-dependency.py $out fetch-module ${public-maven-repos-file} ${unique-dependency.name} ${unique-dependency.group} ${unique-dependency.version} ${unique-dependency.artifact_name} ${unique-dependency.artifact_dir} ${unique-dependency.sha_256}
           '';
           outputHashAlgo = "sha256";
           outputHash = unique-dependency.sha_256;
