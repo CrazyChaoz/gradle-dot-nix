@@ -7,9 +7,11 @@
             "https://plugins.gradle.org/m2",
             "https://maven.google.com"
         ]
-      ''
+      '',
+    local-repos ? [ ]
 }:
 let
+  local-repos-string = pkgs.lib.concatStringsSep " " local-repos;
   # we need to convert the gradle metadata to json
   # this json data is completely static and can be used to fetch the dependencies
   gradle-deps-json = pkgs.stdenv.mkDerivation {
@@ -81,7 +83,12 @@ let
           src = ./.;
           nativeBuildInputs = [ pkgs.python3 pkgs.python3Packages.requests ];
           installPhase = ''
-            python3 fetch-gradle-dependency.py $out fetch-module ${public-maven-repos-file} ${unique-dependency.module_file.name} ${unique-dependency.module_file.group} ${unique-dependency.module_file.version} ${unique-dependency.module_file.artifact_name} ${unique-dependency.module_file.artifact_dir} ${unique-dependency.module_file.sha_256}
+            local=$(find ${local-repos-string} -name '${unique-dependency.artifact_name}' -type f -print -quit)
+            if [[ $local ]]; then
+              cp $local $out
+            else
+              python3 fetch-gradle-dependency.py $out fetch-module ${public-maven-repos-file} ${unique-dependency.module_file.name} ${unique-dependency.module_file.group} ${unique-dependency.module_file.version} ${unique-dependency.module_file.artifact_name} ${unique-dependency.module_file.artifact_dir} ${unique-dependency.module_file.sha_256}
+            fi
           '';
           outputHashAlgo = "sha256";
           outputHash = unique-dependency.module_file.sha_256;
@@ -91,7 +98,12 @@ let
           src = ./.;
           nativeBuildInputs = [ pkgs.python3 pkgs.python3Packages.requests ];
           installPhase = ''
-            python3 fetch-gradle-dependency.py $out fetch-file ${public-maven-repos-file} ${unique-dependency.name} ${unique-dependency.group} ${unique-dependency.version} ${unique-dependency.artifact_name} ${unique-dependency.artifact_dir} ${unique-dependency.sha_256} ${unique-dependency.module_file.artifact_name}
+            local=$(find ${local-repos-string} -name '${unique-dependency.artifact_name}' -type f -print -quit)
+            if [[ $local ]]; then
+              cp $local $out
+            else
+              python3 fetch-gradle-dependency.py $out fetch-file ${public-maven-repos-file} ${unique-dependency.name} ${unique-dependency.group} ${unique-dependency.version} ${unique-dependency.artifact_name} ${unique-dependency.artifact_dir} ${unique-dependency.sha_256} ${unique-dependency.module_file.artifact_name}
+            fi
           '';
           outputHashAlgo = "sha256";
           outputHash = unique-dependency.sha_256;
@@ -116,7 +128,12 @@ let
           src = ./.;
           nativeBuildInputs = [ pkgs.python3 pkgs.python3Packages.requests ];
           installPhase = ''
-            python3 fetch-gradle-dependency.py $out fetch-module ${public-maven-repos-file} ${unique-dependency.name} ${unique-dependency.group} ${unique-dependency.version} ${unique-dependency.artifact_name} ${unique-dependency.artifact_dir} ${unique-dependency.sha_256}
+            local=$(find ${local-repos-string} -name '${unique-dependency.artifact_name}' -type f -print -quit)
+            if [[ $local ]]; then
+              cp $local $out
+            else
+              python3 fetch-gradle-dependency.py $out fetch-module ${public-maven-repos-file} ${unique-dependency.name} ${unique-dependency.group} ${unique-dependency.version} ${unique-dependency.artifact_name} ${unique-dependency.artifact_dir} ${unique-dependency.sha_256}
+            fi
           '';
           outputHashAlgo = "sha256";
           outputHash = unique-dependency.sha_256;
