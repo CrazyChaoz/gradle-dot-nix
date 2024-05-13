@@ -185,6 +185,12 @@ let
   # it changes the project settings (settings.gradle.kts or settings.gradle) to use our repository
   # i'm not sure if we also need repositoriesMode.set(RepositoriesMode.PREFER_PROJECT), but it surely helps
   gradleInit = pkgs.writeText "init.gradle.kts" ''
+    beforeSettings {
+        System.setProperty(
+          "org.gradle.internal.plugins.portal.url.override",
+          "${gradle-dependency-maven-repo}"
+        )
+    }
     projectsLoaded {
         rootProject.allprojects {
             buildscript {
