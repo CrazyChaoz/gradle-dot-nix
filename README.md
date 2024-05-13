@@ -109,6 +109,22 @@ gradle-dot-nix-instance =
     };
 ```
 
+### Custom Local Repositories
+
+If some your dependencies are already available locally, you can set the optional `local-maven-repos` input to an array of store paths.
+This is especially useful for react-native apps, where some maven repos are available through NPM.
+
+```nix 
+gradle-dot-nix-instance = 
+    import gradle-dot-nix {
+        inherit pkgs;
+        gradle-verification-metadata-file = ./gradle/verification-metadata.xml;
+        local-maven-repos = [
+            "${nodeModules}/node_modules/jsc-android/dist"
+        ];
+    };
+```
+
 ### Private Repositories (WIP)
 
 Implementing proper support for private repositories is a bit more complex, as the credentials should not be leaked into the nix store.

@@ -8,10 +8,10 @@
             "https://maven.google.com"
         ]
       '',
-    local-repos ? [ ]
+    local-maven-repos ? [ ]
 }:
 let
-  local-repos-string = pkgs.lib.concatStringsSep " " local-repos;
+  local-repos-string = pkgs.lib.concatStringsSep " " local-maven-repos;
   # we need to convert the gradle metadata to json
   # this json data is completely static and can be used to fetch the dependencies
   gradle-deps-json = pkgs.stdenv.mkDerivation {
