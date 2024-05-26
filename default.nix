@@ -7,9 +7,11 @@
             "https://plugins.gradle.org/m2",
             "https://maven.google.com"
         ]
-      ''
+      '',
+    local-maven-repos ? [ ]
 }:
 let
+  local-repos-string = pkgs.lib.concatStringsSep " " local-maven-repos;
   # we need to convert the gradle metadata to json
   # this json data is completely static and can be used to fetch the dependencies
   gradle-deps-json = pkgs.stdenv.mkDerivation {
@@ -81,7 +83,12 @@ let
           src = ./.;
           nativeBuildInputs = [ pkgs.python3 pkgs.python3Packages.requests ];
           installPhase = ''
-            python3 fetch-gradle-dependency.py $out fetch-module ${public-maven-repos-file} ${unique-dependency.module_file.name} ${unique-dependency.module_file.group} ${unique-dependency.module_file.version} ${unique-dependency.module_file.artifact_name} ${unique-dependency.module_file.artifact_dir} ${unique-dependency.module_file.sha_256}
+            local=$(find ${local-repos-string} -name '${unique-dependency.artifact_name}' -type f -print -quit)
+            if [[ $local ]]; then
+              cp $local $out
+            else
+              python3 fetch-gradle-dependency.py $out fetch-module ${public-maven-repos-file} ${unique-dependency.module_file.name} ${unique-dependency.module_file.group} ${unique-dependency.module_file.version} ${unique-dependency.module_file.artifact_name} ${unique-dependency.module_file.artifact_dir} ${unique-dependency.module_file.sha_256}
+            fi
           '';
           outputHashAlgo = "sha256";
           outputHash = unique-dependency.module_file.sha_256;
@@ -91,7 +98,12 @@ let
           src = ./.;
           nativeBuildInputs = [ pkgs.python3 pkgs.python3Packages.requests ];
           installPhase = ''
-            python3 fetch-gradle-dependency.py $out fetch-file ${public-maven-repos-file} ${unique-dependency.name} ${unique-dependency.group} ${unique-dependency.version} ${unique-dependency.artifact_name} ${unique-dependency.artifact_dir} ${unique-dependency.sha_256} ${unique-dependency.module_file.artifact_name}
+            local=$(find ${local-repos-string} -name '${unique-dependency.artifact_name}' -type f -print -quit)
+            if [[ $local ]]; then
+              cp $local $out
+            else
+              python3 fetch-gradle-dependency.py $out fetch-file ${public-maven-repos-file} ${unique-dependency.name} ${unique-dependency.group} ${unique-dependency.version} ${unique-dependency.artifact_name} ${unique-dependency.artifact_dir} ${unique-dependency.sha_256} ${unique-dependency.module_file.artifact_name}
+            fi
           '';
           outputHashAlgo = "sha256";
           outputHash = unique-dependency.sha_256;
@@ -116,7 +128,12 @@ let
           src = ./.;
           nativeBuildInputs = [ pkgs.python3 pkgs.python3Packages.requests ];
           installPhase = ''
-            python3 fetch-gradle-dependency.py $out fetch-module ${public-maven-repos-file} ${unique-dependency.name} ${unique-dependency.group} ${unique-dependency.version} ${unique-dependency.artifact_name} ${unique-dependency.artifact_dir} ${unique-dependency.sha_256}
+            local=$(find ${local-repos-string} -name '${unique-dependency.artifact_name}' -type f -print -quit)
+            if [[ $local ]]; then
+              cp $local $out
+            else
+              python3 fetch-gradle-dependency.py $out fetch-module ${public-maven-repos-file} ${unique-dependency.name} ${unique-dependency.group} ${unique-dependency.version} ${unique-dependency.artifact_name} ${unique-dependency.artifact_dir} ${unique-dependency.sha_256}
+            fi
           '';
           outputHashAlgo = "sha256";
           outputHash = unique-dependency.sha_256;
@@ -168,6 +185,12 @@ let
   # it changes the project settings (settings.gradle.kts or settings.gradle) to use our repository
   # i'm not sure if we also need repositoriesMode.set(RepositoriesMode.PREFER_PROJECT), but it surely helps
   gradleInit = pkgs.writeText "init.gradle.kts" ''
+    beforeSettings {
+        System.setProperty(
+          "org.gradle.internal.plugins.portal.url.override",
+          "${gradle-dependency-maven-repo}"
+        )
+    }
     projectsLoaded {
         rootProject.allprojects {
             buildscript {
