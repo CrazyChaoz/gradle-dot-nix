@@ -148,6 +148,9 @@ let
           mkdir -p $directory
           cp ${actual-file} $out/$INTERNAL_PATH
         '';
+        fixupPhase = ''
+            echo "no need fixing up $out"
+          '';
       }
   ;
 
