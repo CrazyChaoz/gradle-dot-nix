@@ -131,6 +131,10 @@ Implementing proper support for private repositories is a bit more complex, as t
 
 The current plan is to use the maven standard [`settings.xml` file](https://maven.apache.org/settings.html#servers) to configure the repositories, and to give the content of that via an impure environment variable to the fetcher.
 
+In the meantime you should either: 
+- run a custom fetcher that fetches the specific required repos beforehand and makes them available via [Custom Local Repositories](README.md#custom-local-repositories)
+- run a proxy server that internally authenticates against the specific protected API and to the localhost provides a passwordless API, which in turn is set via [Custom Public Repositories](README.md#custom-public-repositories)
+
 Implementation Details
 ---
 
