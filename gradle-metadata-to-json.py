@@ -26,7 +26,6 @@ def process_component(component):
     module_file = ""
 
     # Iterate through the artifacts
-    # Download the artifact if it is a module file
     for artifact in component.findall('.//default:artifact', namespaces):
         artifact_name = artifact.attrib['name']
 
