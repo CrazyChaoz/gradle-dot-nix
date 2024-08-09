@@ -1,14 +1,15 @@
-{   pkgs,
-    gradle-verification-metadata-file,
-    public-maven-repos ? ''
-        [
-            "https://dl.google.com/dl/android/maven2",
-            "https://repo.maven.apache.org/maven2",
-            "https://plugins.gradle.org/m2",
-            "https://maven.google.com"
-        ]
-      '',
-    local-maven-repos ? [ ]
+{
+  pkgs,
+  gradle-verification-metadata-file ? "",
+  public-maven-repos ? ''
+    [
+        "https://dl.google.com/dl/android/maven2",
+        "https://repo.maven.apache.org/maven2",
+        "https://plugins.gradle.org/m2",
+        "https://maven.google.com"
+    ]
+  '',
+  local-maven-repos ? [ ],
 }:
 let
   local-repos-string = pkgs.lib.concatStringsSep " " local-maven-repos;
@@ -25,7 +26,6 @@ let
 
   # we need to convert the json data to data that nix understands
   gradle-deps-nix = builtins.fromJSON (builtins.readFile gradle-deps-json);
-
 
   public-maven-repos-file = pkgs.writeText "public-maven-repos.json" public-maven-repos;
 
@@ -46,7 +46,8 @@ let
   #
   # the third case is where we just fetch the file from the server
   # this is only done for .module files, because they are never renamed
-  conversion-function = unique-dependency:
+  conversion-function =
+    unique-dependency:
     if unique-dependency.is_added_pom_file == "true" then
       let
         actual-file = pkgs.writeText unique-dependency.artifact_name ''
@@ -81,7 +82,10 @@ let
         module-derivation = pkgs.stdenv.mkDerivation {
           name = unique-dependency.module_file.artifact_name;
           src = ./.;
-          nativeBuildInputs = [ pkgs.python3 pkgs.python3Packages.requests ];
+          nativeBuildInputs = [
+            pkgs.python3
+            pkgs.python3Packages.requests
+          ];
           installPhase = ''
             local=$(find ${local-repos-string} -name '${unique-dependency.artifact_name}' -type f -print -quit)
             if [[ $local ]]; then
@@ -96,7 +100,10 @@ let
         actual-file = pkgs.stdenv.mkDerivation {
           name = unique-dependency.artifact_name;
           src = ./.;
-          nativeBuildInputs = [ pkgs.python3 pkgs.python3Packages.requests ];
+          nativeBuildInputs = [
+            pkgs.python3
+            pkgs.python3Packages.requests
+          ];
           installPhase = ''
             local=$(find ${local-repos-string} -name '${unique-dependency.artifact_name}' -type f -print -quit)
             if [[ $local ]]; then
@@ -126,7 +133,10 @@ let
         actual-file = pkgs.stdenv.mkDerivation {
           name = unique-dependency.artifact_name;
           src = ./.;
-          nativeBuildInputs = [ pkgs.python3 pkgs.python3Packages.requests ];
+          nativeBuildInputs = [
+            pkgs.python3
+            pkgs.python3Packages.requests
+          ];
           installPhase = ''
             local=$(find ${local-repos-string} -name '${unique-dependency.artifact_name}' -type f -print -quit)
             if [[ $local ]]; then
@@ -149,12 +159,9 @@ let
           cp ${actual-file} $out/$INTERNAL_PATH
         '';
         fixupPhase = ''
-            echo "no need fixing up $out"
-          '';
-      }
-  ;
-
-
+          echo "no need fixing up $out"
+        '';
+      };
 
   # this is where all the dependencies are collected into a single repository
   # the pkgs.linkFarm function takes an array of attribute sets
@@ -163,7 +170,11 @@ let
   # --> * path: the actual path to the derivation
   # the output of this function is a single derivation which contains all the dependencies
   # the input is the array of the nixified dependencies, which are fed into the conversion function
-  gradle-dependency-maven-repo = pkgs.symlinkJoin { name = "maven-repo"; paths = (map conversion-function gradle-deps-nix.components); postBuild = "echo maven repository was built"; };
+  gradle-dependency-maven-repo = pkgs.symlinkJoin {
+    name = "maven-repo";
+    paths = (map conversion-function gradle-deps-nix.components);
+    postBuild = "echo maven repository was built";
+  };
 
   # idea taken from https://bmcgee.ie/posts/2023/02/nix-what-are-fixed-output-derivations-and-why-use-them/
   # gradle has a huge disliking for self fetched dependencies
@@ -220,9 +231,16 @@ let
         }
     }
   '';
+
+  no-file-function =
+    argument:
+    if builtins.isPath gradle-verification-metadata-file then
+      argument
+    else
+      throw "No gradle verification-metadata.xml file was provided";
 in
 {
-  mvn-repo = gradle-dependency-maven-repo;
-  gradle-init = gradleInit;
-  gradle-deps-json = gradle-deps-json;
+  gradle-deps-json = (no-file-function gradle-deps-json);
+  mvn-repo = (no-file-function gradle-dependency-maven-repo);
+  gradle-init = (no-file-function gradleInit);
 }
