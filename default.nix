@@ -174,7 +174,7 @@ let
     else if unique-dependency.has_module_file == "true" then
       let
         tryEval-artifact = builtins.elemAt (builtins.filter (elem: elem.success == true) (
-          map (
+          pkgs.lib.lists.flatten map (
             sha256-module:
             map (
               sha256-deps:
