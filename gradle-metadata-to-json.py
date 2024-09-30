@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 from xml.etree import ElementTree
@@ -28,10 +29,17 @@ def process_component(component):
     # Iterate through the artifacts
     for artifact in component.findall('.//default:artifact', namespaces):
         artifact_name = artifact.attrib['name']
+        sha256_element = artifact.find('.//default:sha256', namespaces)
+        artifact_hash = sha256_element.attrib['value']
+
+        # Collect all hashes including also-trust
+        all_hashes = [artifact_hash]
+        for also_trust in sha256_element.findall('.//default:also-trust', namespaces):
+            all_hashes.append(also_trust.attrib['value'])
 
         if not artifact_name.endswith('.module'):
             skipped_files.append(artifact_name)
-            hash_for_artifact[artifact_name] = artifact.find('.//default:sha256', namespaces).attrib['value']
+            hash_for_artifact[artifact_name] = all_hashes
         else:
             module_file = '''
                     {
@@ -42,7 +50,7 @@ def process_component(component):
                         "artifact_dir" : "''' + artifact_dir + '''",
                         "has_module_file" : "false",
                         "is_added_pom_file" : "false",
-                        "sha_256" : "''' + artifact.find('.//default:sha256', namespaces).attrib['value'] + '''"
+                        "sha_256" : ''' + json.dumps(all_hashes) + '''
                     }
             '''
 
@@ -60,7 +68,7 @@ def process_component(component):
         if hash_for_artifact.get(artifact) is not None:
             sha_256 = hash_for_artifact.get(artifact)
         else:
-            sha_256 = "0"
+            sha_256 = ["0"]
 
         if module_file != "":
             has_module_file = "true"
@@ -85,7 +93,7 @@ def process_component(component):
                         "version" : "''' + version + '''",
                         "artifact_name" : "''' + artifact + '''",
                         "artifact_dir" : "''' + artifact_dir + '''",
-                        "sha_256" : "''' + sha_256 + '''",
+                        "sha_256" : "''' + json.dumps(sha_256) + '''",
                         "has_module_file" : "''' + has_module_file + '''",
                         "is_added_pom_file" : "''' + is_added_pom_file + '''"'''+ text_for_module_file + '''
                     }
