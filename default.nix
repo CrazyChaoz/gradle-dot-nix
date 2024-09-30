@@ -46,122 +46,138 @@ let
   #
   # the third case is where we just fetch the file from the server
   # this is only done for .module files, because they are never renamed
+
+  pom-file-derivation =
+    unique-dependency:
+    let
+      actual-file = pkgs.writeText unique-dependency.artifact_name ''
+        <project xmlns="http://maven.apache.org/POM/4.0.0"
+                 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+          <!-- This module was also published with a richer model, Gradle metadata,  -->
+          <!-- which should be used instead. Do not delete the following line which  -->
+          <!-- is to indicate to Gradle or any Gradle module metadata file consumer  -->
+          <!-- that they should prefer consuming it instead. -->
+          <!-- do_not_remove: published-with-gradle-metadata -->
+          <modelVersion>4.0.0</modelVersion>
+          <groupId>${unique-dependency.group}</groupId>
+          <artifactId>${unique-dependency.name}</artifactId>
+          <version>${unique-dependency.version}</version>
+        </project>
+      '';
+    in
+    pkgs.stdenv.mkDerivation {
+      name = unique-dependency.artifact_name;
+      src = ./.;
+      INTERNAL_PATH = unique-dependency.artifact_dir + "/" + unique-dependency.artifact_name;
+      installPhase = ''
+        directory=$out/$(dirname "$INTERNAL_PATH")
+        mkdir -p $directory
+        cp ${actual-file} $out/$INTERNAL_PATH
+      '';
+    };
+
+  module-file-derivation =
+    unique-dependency: sha256-deps:
+    let
+      actual-file = pkgs.stdenv.mkDerivation {
+        name = unique-dependency.artifact_name;
+        src = ./.;
+        nativeBuildInputs = [
+          pkgs.python3
+          pkgs.python3Packages.requests
+        ];
+        installPhase = ''
+          local=$(find ${local-repos-string} -name '${unique-dependency.artifact_name}' -type f -print -quit)
+          if [[ $local ]]; then
+            cp $local $out
+          else
+            python3 fetch-gradle-dependency.py $out fetch-module ${public-maven-repos-file} ${unique-dependency.name} ${unique-dependency.group} ${unique-dependency.version} ${unique-dependency.artifact_name} ${unique-dependency.artifact_dir} ${sha256-deps}
+          fi
+        '';
+        outputHashAlgo = "sha256";
+        outputHash = sha256-deps;
+      };
+    in
+    pkgs.stdenv.mkDerivation {
+      name = unique-dependency.artifact_name;
+      src = ./.;
+      INTERNAL_PATH = unique-dependency.artifact_dir + "/" + unique-dependency.artifact_name;
+      installPhase = ''
+        directory=$out/$(dirname "$INTERNAL_PATH")
+        mkdir -p $directory
+        cp ${actual-file} $out/$INTERNAL_PATH
+      '';
+      fixupPhase = ''
+        echo "no need fixing up $out"
+      '';
+    };
+
+  full-artifact-derivation =
+    unique-dependency: sha256-deps: sha256-module:
+    let
+      module-derivation = pkgs.stdenv.mkDerivation {
+        name = unique-dependency.module_file.artifact_name;
+        src = ./.;
+        nativeBuildInputs = [
+          pkgs.python3
+          pkgs.python3Packages.requests
+        ];
+        installPhase = ''
+          local=$(find ${local-repos-string} -name '${unique-dependency.artifact_name}' -type f -print -quit)
+          if [[ $local ]]; then
+            cp $local $out
+          else
+            python3 fetch-gradle-dependency.py $out fetch-module ${public-maven-repos-file} ${unique-dependency.module_file.name} ${unique-dependency.module_file.group} ${unique-dependency.module_file.version} ${unique-dependency.module_file.artifact_name} ${unique-dependency.module_file.artifact_dir} ${sha256-module}
+          fi
+        '';
+        outputHashAlgo = "sha256";
+        outputHash = sha256-module;
+      };
+      actual-file = pkgs.stdenv.mkDerivation {
+        name = unique-dependency.artifact_name;
+        src = ./.;
+        nativeBuildInputs = [
+          pkgs.python3
+          pkgs.python3Packages.requests
+        ];
+        installPhase = ''
+          local=$(find ${local-repos-string} -name '${unique-dependency.artifact_name}' -type f -print -quit)
+          if [[ $local ]]; then
+            cp $local $out
+          else
+            python3 fetch-gradle-dependency.py $out fetch-file ${public-maven-repos-file} ${unique-dependency.name} ${unique-dependency.group} ${unique-dependency.version} ${unique-dependency.artifact_name} ${unique-dependency.artifact_dir} ${sha256-deps} ${unique-dependency.module_file.artifact_name}
+          fi
+        '';
+        outputHashAlgo = "sha256";
+        outputHash = sha256-deps;
+      };
+    in
+    pkgs.stdenv.mkDerivation {
+      name = unique-dependency.artifact_name;
+      src = ./.;
+      nativeBuildInputs = [ pkgs.python3 ];
+      installPhase = ''
+        INTERNAL_PATH=`python3 rename-module.py ${module-derivation} ${unique-dependency.artifact_name} ${unique-dependency.artifact_dir}`
+        directory=$out/$(dirname "$INTERNAL_PATH")
+        mkdir -p $directory
+
+        cp ${actual-file} $out/$INTERNAL_PATH
+      '';
+    };
+
   conversion-function =
     unique-dependency:
     if unique-dependency.is_added_pom_file == "true" then
-      let
-        actual-file = pkgs.writeText unique-dependency.artifact_name ''
-          <project xmlns="http://maven.apache.org/POM/4.0.0"
-                   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-                   http://maven.apache.org/xsd/maven-4.0.0.xsd"
-                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-            <!-- This module was also published with a richer model, Gradle metadata,  -->
-            <!-- which should be used instead. Do not delete the following line which  -->
-            <!-- is to indicate to Gradle or any Gradle module metadata file consumer  -->
-            <!-- that they should prefer consuming it instead. -->
-            <!-- do_not_remove: published-with-gradle-metadata -->
-            <modelVersion>4.0.0</modelVersion>
-            <groupId>${unique-dependency.group}</groupId>
-            <artifactId>${unique-dependency.name}</artifactId>
-            <version>${unique-dependency.version}</version>
-          </project>
-        '';
-      in
-      pkgs.stdenv.mkDerivation {
-        name = unique-dependency.artifact_name;
-        src = ./.;
-        INTERNAL_PATH = unique-dependency.artifact_dir + "/" + unique-dependency.artifact_name;
-        installPhase = ''
-          directory=$out/$(dirname "$INTERNAL_PATH")
-          mkdir -p $directory
-          cp ${actual-file} $out/$INTERNAL_PATH
-        '';
-      }
+      pom-file-derivation unique-dependency
     else if unique-dependency.has_module_file == "true" then
-      let
-        module-derivation = pkgs.stdenv.mkDerivation {
-          name = unique-dependency.module_file.artifact_name;
-          src = ./.;
-          nativeBuildInputs = [
-            pkgs.python3
-            pkgs.python3Packages.requests
-          ];
-          installPhase = ''
-            local=$(find ${local-repos-string} -name '${unique-dependency.artifact_name}' -type f -print -quit)
-            if [[ $local ]]; then
-              cp $local $out
-            else
-              python3 fetch-gradle-dependency.py $out fetch-module ${public-maven-repos-file} ${unique-dependency.module_file.name} ${unique-dependency.module_file.group} ${unique-dependency.module_file.version} ${unique-dependency.module_file.artifact_name} ${unique-dependency.module_file.artifact_dir} ${unique-dependency.module_file.sha_256}
-            fi
-          '';
-          outputHashAlgo = "sha256";
-          outputHash = unique-dependency.module_file.sha_256;
-        };
-        actual-file = pkgs.stdenv.mkDerivation {
-          name = unique-dependency.artifact_name;
-          src = ./.;
-          nativeBuildInputs = [
-            pkgs.python3
-            pkgs.python3Packages.requests
-          ];
-          installPhase = ''
-            local=$(find ${local-repos-string} -name '${unique-dependency.artifact_name}' -type f -print -quit)
-            if [[ $local ]]; then
-              cp $local $out
-            else
-              python3 fetch-gradle-dependency.py $out fetch-file ${public-maven-repos-file} ${unique-dependency.name} ${unique-dependency.group} ${unique-dependency.version} ${unique-dependency.artifact_name} ${unique-dependency.artifact_dir} ${unique-dependency.sha_256} ${unique-dependency.module_file.artifact_name}
-            fi
-          '';
-          outputHashAlgo = "sha256";
-          outputHash = unique-dependency.sha_256;
-        };
-      in
-      pkgs.stdenv.mkDerivation {
-        name = unique-dependency.artifact_name;
-        src = ./.;
-        nativeBuildInputs = [ pkgs.python3 ];
-        installPhase = ''
-          INTERNAL_PATH=`python3 rename-module.py ${module-derivation} ${unique-dependency.artifact_name} ${unique-dependency.artifact_dir}`
-          directory=$out/$(dirname "$INTERNAL_PATH")
-          mkdir -p $directory
-
-          cp ${actual-file} $out/$INTERNAL_PATH
-        '';
-      }
+      map (sha256-module: map (sha256-deps: (full-artifact-derivation unique-dependency sha256-deps sha256-module)) unique-dependency.sha_256) unique-dependency.module_file.sha_256
     else
-      let
-        actual-file = pkgs.stdenv.mkDerivation {
-          name = unique-dependency.artifact_name;
-          src = ./.;
-          nativeBuildInputs = [
-            pkgs.python3
-            pkgs.python3Packages.requests
-          ];
-          installPhase = ''
-            local=$(find ${local-repos-string} -name '${unique-dependency.artifact_name}' -type f -print -quit)
-            if [[ $local ]]; then
-              cp $local $out
-            else
-              python3 fetch-gradle-dependency.py $out fetch-module ${public-maven-repos-file} ${unique-dependency.name} ${unique-dependency.group} ${unique-dependency.version} ${unique-dependency.artifact_name} ${unique-dependency.artifact_dir} ${unique-dependency.sha_256}
-            fi
-          '';
-          outputHashAlgo = "sha256";
-          outputHash = unique-dependency.sha_256;
-        };
-      in
-      pkgs.stdenv.mkDerivation {
-        name = unique-dependency.artifact_name;
-        src = ./.;
-        INTERNAL_PATH = unique-dependency.artifact_dir + "/" + unique-dependency.artifact_name;
-        installPhase = ''
-          directory=$out/$(dirname "$INTERNAL_PATH")
-          mkdir -p $directory
-          cp ${actual-file} $out/$INTERNAL_PATH
-        '';
-        fixupPhase = ''
-          echo "no need fixing up $out"
-        '';
-      };
+      map (sha256: (module-file-derivation unique-dependency sha256)) unique-dependency.sha_256;
+
+  #  conversion-function =
+  #    unique-dependency: tryEval conversion-function-internal (map unique-dependency.sha_256);
 
   # this is where all the dependencies are collected into a single repository
   # the pkgs.linkFarm function takes an array of attribute sets
