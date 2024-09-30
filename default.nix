@@ -173,20 +173,21 @@ let
       pom-file-derivation unique-dependency
     else if unique-dependency.has_module_file == "true" then
       let
-        tryEval-artifact = builtins.elemAt (builtins.filter (elem: elem.success == true)
-          builtins.tryEval (map (
-            sha256-module:
-            map (
-              sha256-deps: (full-artifact-derivation unique-dependency sha256-deps sha256-module)
-            ) unique-dependency.sha_256
-          ) unique-dependency.module_file.sha_256)
-        ) 0;
+        tryEval-artifact = builtins.elemAt (builtins.filter (elem: elem.success == true) map (
+          sha256-module:
+          map (
+            sha256-deps:
+            (builtins.tryEval (full-artifact-derivation unique-dependency sha256-deps sha256-module))
+          ) unique-dependency.sha_256
+        ) unique-dependency.module_file.sha_256) 0;
       in
       tryEval-artifact.value
     else
       let
         tryEval-artifact = builtins.elemAt (builtins.filter (elem: elem.success == true)
-          builtins.tryEval (map (sha256: (module-file-derivation unique-dependency sha256)) unique-dependency.sha_256)
+          map (
+            sha256: (builtins.tryEval (module-file-derivation unique-dependency sha256))
+          ) unique-dependency.sha_256
         ) 0;
       in
       tryEval-artifact.value;
