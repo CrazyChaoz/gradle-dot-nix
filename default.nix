@@ -172,9 +172,24 @@ let
     if unique-dependency.is_added_pom_file == "true" then
       pom-file-derivation unique-dependency
     else if unique-dependency.has_module_file == "true" then
-      map (sha256-module: map (sha256-deps: (full-artifact-derivation unique-dependency sha256-deps sha256-module)) unique-dependency.sha_256) unique-dependency.module_file.sha_256
+      let
+        tryEval-artifact = elemAt (filter (elem: elem.success == true) (
+          tryEval map (
+            sha256-module:
+            map (
+              sha256-deps: (full-artifact-derivation unique-dependency sha256-deps sha256-module)
+            ) unique-dependency.sha_256
+          ) unique-dependency.module_file.sha_256
+        )) 0;
+      in
+      tryEval-artifact.value
     else
-      map (sha256: (module-file-derivation unique-dependency sha256)) unique-dependency.sha_256;
+      let
+        tryEval-artifact = elemAt (filter (elem: elem.success == true) (
+          tryEval map (sha256: (module-file-derivation unique-dependency sha256)) unique-dependency.sha_256
+        )) 0;
+      in
+      tryEval-artifact.value;
 
   #  conversion-function =
   #    unique-dependency: tryEval conversion-function-internal (map unique-dependency.sha_256);
