@@ -52,7 +52,7 @@ def process_component(component):
                         "artifact_dir" : "''' + artifact_dir + '''",
                         "has_module_file" : "false",
                         "is_added_pom_file" : "false",
-                        "sha_256" : ''' + json.dumps(random.SystemRandom.shuffle(all_hashes)) + '''
+                        "sha_256" : ''' + json.dumps(random.SystemRandom().shuffle(all_hashes)) + '''
                     }
             '''
 
@@ -95,7 +95,7 @@ def process_component(component):
                         "version" : "''' + version + '''",
                         "artifact_name" : "''' + artifact + '''",
                         "artifact_dir" : "''' + artifact_dir + '''",
-                        "sha_256" : ''' + json.dumps(random.SystemRandom.shuffle(sha_256)) + ''',
+                        "sha_256" : ''' + json.dumps(random.SystemRandom().shuffle(sha_256)) + ''',
                         "has_module_file" : "''' + has_module_file + '''",
                         "is_added_pom_file" : "''' + is_added_pom_file + '''"'''+ text_for_module_file + '''
                     }
