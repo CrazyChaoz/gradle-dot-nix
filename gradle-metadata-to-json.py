@@ -2,8 +2,6 @@ import json
 import os
 import sys
 from xml.etree import ElementTree
-import random
-
 
 # Define the namespaces
 namespaces = {
@@ -43,7 +41,6 @@ def process_component(component):
             skipped_files.append(artifact_name)
             hash_for_artifact[artifact_name] = all_hashes
         else:
-            random.shuffle(all_hashes)
             module_file = '''
                     {
                         "name" : "''' + name + '''",
@@ -89,7 +86,6 @@ def process_component(component):
         else:
             text_for_module_file = ""
 
-        random.shuffle(sha_256)
         output_file.write('''
                     {
                         "name" : "''' + name + '''",
