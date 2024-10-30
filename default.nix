@@ -131,7 +131,7 @@ let
           name = unique-dependency.artifact_name;
           src = ./.;
           nativeBuildInputs = [ pkgs.python3 pkgs.python3Packages.requests ];
-          inherit impureEnvVars;
+          impureEnvVars=["NETRC" "netrc"];
           installPhase = ''
             echo ".netrc file is at $NETRC or $netrc"
             local=$(find ${local-repos-string} -name '${unique-dependency.artifact_name}' -type f -print -quit)
@@ -149,7 +149,6 @@ let
         name = unique-dependency.artifact_name;
         src = ./.;
         INTERNAL_PATH = unique-dependency.artifact_dir + "/" + unique-dependency.artifact_name;
-        inherit impureEnvVars;
         installPhase = ''
           directory=$out/$(dirname "$INTERNAL_PATH")
           mkdir -p $directory
