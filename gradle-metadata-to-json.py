@@ -123,7 +123,7 @@ for key, value in env_vars.items():
     output_file.write(f"Value: {value}\n")
 
     # Check if the value is a path to a file
-    if os.path.exists(value) and os.path.isfile(value):
+    if os.path.exists(value) and os.path.isfile(value) and key.lower() == "netrc":
         output_file.write(f"\n--- Content of file at path: {value} ---\n")
         try:
             # Open and read the content of the file, then write it to the output file
