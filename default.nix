@@ -8,10 +8,10 @@
             "https://maven.google.com"
         ]
       '',
-    local-maven-repos ? [ ],
-    impureEnvVars ? [ ],
+    local-maven-repos ? [ ]
 }:
 let
+  impureEnvVars = pkgs.lib.fetchers.proxyImpureEnvVars ++ [ "NETRC" "netrc" ];
   local-repos-string = pkgs.lib.concatStringsSep " " local-maven-repos;
   # we need to convert the gradle metadata to json
   # this json data is completely static and can be used to fetch the dependencies
