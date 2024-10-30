@@ -19,6 +19,7 @@ let
     name = "gradle-deps-json";
     src = ./.;
     buildInputs = [ pkgs.python3 ];
+    inherit impureEnvVars;
     buildPhase = ''
       echo ".netrc file is at $NETRC or $netrc"
       python3 gradle-metadata-to-json.py ${gradle-verification-metadata-file} $out
