@@ -19,9 +19,7 @@ let
     name = "gradle-deps-json";
     src = ./.;
     buildInputs = [ pkgs.python3 ];
-    inherit impureEnvVars;
     buildPhase = ''
-      echo ".netrc file is at $NETRC or $netrc"
       python3 gradle-metadata-to-json.py ${gradle-verification-metadata-file} $out
     '';
   };
@@ -119,7 +117,6 @@ let
         name = unique-dependency.artifact_name;
         src = ./.;
         nativeBuildInputs = [ pkgs.python3 ];
-        inherit impureEnvVars;
         installPhase = ''
           INTERNAL_PATH=`python3 rename-module.py ${module-derivation} ${unique-dependency.artifact_name} ${unique-dependency.artifact_dir}`
           directory=$out/$(dirname "$INTERNAL_PATH")
@@ -136,6 +133,7 @@ let
           nativeBuildInputs = [ pkgs.python3 pkgs.python3Packages.requests ];
           inherit impureEnvVars;
           installPhase = ''
+            echo ".netrc file is at $NETRC or $netrc"
             local=$(find ${local-repos-string} -name '${unique-dependency.artifact_name}' -type f -print -quit)
             if [[ $local ]]; then
               cp $local $out
