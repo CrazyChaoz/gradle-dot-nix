@@ -129,9 +129,21 @@ gradle-dot-nix-instance =
 
 Implementing proper support for private repositories is a bit more complex, as the credentials should not be leaked into the nix store.
 
-The current plan is to use the maven standard [`settings.xml` file](https://maven.apache.org/settings.html#servers) to configure the repositories, and to give the content of that via an impure environment variable to the fetcher.
+Thanks to [@eeedean](https://github.com/eeedean), there is now support for .netrc files.
+The usage of those is not quite trivial, but it works without leaking credentials into the store, the credentials "only" need to be readable by any nixbld user. This is less of an issue than it sounds, since the flag that allows access to the file is only available to `trusted-users`.
 
-In the meantime you should either: 
+#### Setup:
+Add the following to your nix.conf:
+```
+experimental-features = nix-command flakes configurable-impure-env
+trusted-users = YOUR_USER
+impure-env = NETRC=/path/to/netrc/that/nixbld/can/access
+```
+and then you can start you nix build using
+`nix build --extra-sandbox-paths /path/to/netrc/that/nixbld/can/access`
+
+
+You could also still: 
 - run a custom fetcher that fetches the specific required repos beforehand and makes them available via [Custom Local Repositories](README.md#custom-local-repositories)
 - run a proxy server that internally authenticates against the specific protected API and to the localhost provides a passwordless API, which in turn is set via [Custom Public Repositories](README.md#custom-public-repositories)
 
