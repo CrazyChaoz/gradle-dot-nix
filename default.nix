@@ -11,6 +11,7 @@
     local-maven-repos ? [ ]
 }:
 let
+  impureEnvVars = pkgs.lib.fetchers.proxyImpureEnvVars ++ [ "NETRC" "netrc" ];
   local-repos-string = pkgs.lib.concatStringsSep " " local-maven-repos;
   # we need to convert the gradle metadata to json
   # this json data is completely static and can be used to fetch the dependencies
@@ -69,6 +70,7 @@ let
       pkgs.stdenv.mkDerivation {
         name = unique-dependency.artifact_name;
         src = ./.;
+        inherit impureEnvVars;
         INTERNAL_PATH = unique-dependency.artifact_dir + "/" + unique-dependency.artifact_name;
         installPhase = ''
           directory=$out/$(dirname "$INTERNAL_PATH")
@@ -82,6 +84,7 @@ let
           name = unique-dependency.module_file.artifact_name;
           src = ./.;
           nativeBuildInputs = [ pkgs.python3 pkgs.python3Packages.requests ];
+          inherit impureEnvVars;
           installPhase = ''
             local=$(find ${local-repos-string} -name '${unique-dependency.artifact_name}' -type f -print -quit)
             if [[ $local ]]; then
@@ -97,6 +100,7 @@ let
           name = unique-dependency.artifact_name;
           src = ./.;
           nativeBuildInputs = [ pkgs.python3 pkgs.python3Packages.requests ];
+          inherit impureEnvVars;
           installPhase = ''
             local=$(find ${local-repos-string} -name '${unique-dependency.artifact_name}' -type f -print -quit)
             if [[ $local ]]; then
@@ -113,6 +117,7 @@ let
         name = unique-dependency.artifact_name;
         src = ./.;
         nativeBuildInputs = [ pkgs.python3 ];
+        inherit impureEnvVars;
         installPhase = ''
           INTERNAL_PATH=`python3 rename-module.py ${module-derivation} ${unique-dependency.artifact_name} ${unique-dependency.artifact_dir}`
           directory=$out/$(dirname "$INTERNAL_PATH")
@@ -127,6 +132,7 @@ let
           name = unique-dependency.artifact_name;
           src = ./.;
           nativeBuildInputs = [ pkgs.python3 pkgs.python3Packages.requests ];
+          inherit impureEnvVars;
           installPhase = ''
             local=$(find ${local-repos-string} -name '${unique-dependency.artifact_name}' -type f -print -quit)
             if [[ $local ]]; then
@@ -143,6 +149,7 @@ let
         name = unique-dependency.artifact_name;
         src = ./.;
         INTERNAL_PATH = unique-dependency.artifact_dir + "/" + unique-dependency.artifact_name;
+        inherit impureEnvVars;
         installPhase = ''
           directory=$out/$(dirname "$INTERNAL_PATH")
           mkdir -p $directory
