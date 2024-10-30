@@ -8,10 +8,10 @@
             "https://maven.google.com"
         ]
       '',
-    local-maven-repos ? [ ]
+    local-maven-repos ? [ ],
+    impureEnvVars ? [ ],
 }:
 let
-  impureEnvVars = pkgs.lib.fetchers.proxyImpureEnvVars ++ [ "NETRC" "netrc" ];
   local-repos-string = pkgs.lib.concatStringsSep " " local-maven-repos;
   # we need to convert the gradle metadata to json
   # this json data is completely static and can be used to fetch the dependencies
@@ -131,7 +131,7 @@ let
           name = unique-dependency.artifact_name;
           src = ./.;
           nativeBuildInputs = [ pkgs.python3 pkgs.python3Packages.requests ];
-          impureEnvVars=["NETRC" "netrc"];
+          inherit impureEnvVars;
           installPhase = ''
             echo ".netrc file is at $NETRC or $netrc"
             local=$(find ${local-repos-string} -name '${unique-dependency.artifact_name}' -type f -print -quit)
