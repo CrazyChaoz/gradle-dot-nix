@@ -164,12 +164,14 @@ let
 
 
   # this is where all the dependencies are collected into a single repository
-  # the pkgs.linkFarm function takes an array of attribute sets
-  # --> each with
-  # --> * name: is converted to a path in the output
-  # --> * path: the actual path to the derivation
+  # the pkgs.symlinkJoin function takes an array of paths and creates a single derivation
+  # there were multiple options for this:
+  # 1. use pkgs.symlinkJoin, which is the most simple solution
+  # 2. use pkgs.linkFarm, but that has issues with the amount of files in the maven repo (due to foldl)
+  # 3. use pkgs.buildEnv, but that has the same performance as pkgs.symlinkJoin
   # the output of this function is a single derivation which contains all the dependencies
   # the input is the array of the nixified dependencies, which are fed into the conversion function
+  # TODO: check if there is way to parallelize this, as this is a huge bottleneck on systems with more than 2 cores
   gradle-dependency-maven-repo = pkgs.symlinkJoin { name = "maven-repo"; paths = (map conversion-function gradle-deps-nix.components); postBuild = "echo maven repository was built"; };
 
   # idea taken from https://bmcgee.ie/posts/2023/02/nix-what-are-fixed-output-derivations-and-why-use-them/
@@ -194,42 +196,43 @@ let
   # we create a file called init.gradle.kts
   # it changes the project settings (settings.gradle.kts or settings.gradle) to use our repository
   # i'm not sure if we also need repositoriesMode.set(RepositoriesMode.PREFER_PROJECT), but it surely helps
-  gradleInit = pkgs.writeText "init.gradle.kts" ''
+  mavenRepositoryToGradleInitScriptFunction = maven-repository: pkgs.writeText "init.gradle.kts" ''
     beforeSettings {
         System.setProperty(
           "org.gradle.internal.plugins.portal.url.override",
-          "${gradle-dependency-maven-repo}"
+          "${maven-repository}"
         )
     }
     projectsLoaded {
         rootProject.allprojects {
             buildscript {
                 repositories {
-                    maven { url = uri("${gradle-dependency-maven-repo}") }
+                    maven { url = uri("${maven-repository}") }
                 }
             }
             repositories {
-                maven { url = uri("${gradle-dependency-maven-repo}") }
+                maven { url = uri("${maven-repository}") }
             }
         }
     }
     settingsEvaluated {
         pluginManagement {
             repositories {
-                maven { url = uri("${gradle-dependency-maven-repo}") }
+                maven { url = uri("${maven-repository}") }
             }
         }
         dependencyResolutionManagement {
             repositoriesMode.set(RepositoriesMode.PREFER_PROJECT)
             repositories {
-                maven { url = uri("${gradle-dependency-maven-repo}") }
+                maven { url = uri("${maven-repository}") }
             }
         }
     }
   '';
 in
 {
+  inherit mavenRepositoryToGradleInitScriptFunction;
   mvn-repo = gradle-dependency-maven-repo;
-  gradle-init = gradleInit;
+  gradle-init = mavenRepositoryToGradleInitScriptFunction gradle-dependency-maven-repo;
   gradle-deps-json = gradle-deps-json;
 }
