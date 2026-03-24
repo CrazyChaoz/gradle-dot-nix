@@ -15,17 +15,7 @@ let
   local-repos-string = pkgs.lib.concatStringsSep " " local-maven-repos;
   # we need to convert the gradle metadata to json
   # this json data is completely static and can be used to fetch the dependencies
-  gradle-deps-json = pkgs.stdenv.mkDerivation {
-    name = "gradle-deps-json";
-    src = ./.;
-    buildInputs = [ pkgs.python3 ];
-    buildPhase = ''
-      python3 gradle-metadata-to-json.py ${gradle-verification-metadata-file} $out
-    '';
-  };
-
-  # we need to convert the json data to data that nix understands
-  gradle-deps-nix = builtins.fromJSON (builtins.readFile gradle-deps-json);
+  gradle-deps-nix = import ./parse-verification-metadata.nix { inherit (pkgs) lib; } gradle-verification-metadata-file;
 
 
   public-maven-repos-file = pkgs.writeText "public-maven-repos.json" public-maven-repos;
@@ -48,7 +38,7 @@ let
   # the third case is where we just fetch the file from the server
   # this is only done for .module files, because they are never renamed
   conversion-function = unique-dependency:
-    if unique-dependency.is_added_pom_file == "true" then
+    if unique-dependency.is_added_pom_file then
       let
         actual-file = pkgs.writeText unique-dependency.artifact_name ''
           <project xmlns="http://maven.apache.org/POM/4.0.0"
@@ -78,7 +68,7 @@ let
           cp ${actual-file} $out/$INTERNAL_PATH
         '';
       }
-    else if unique-dependency.has_module_file == "true" then
+    else if unique-dependency.has_module_file then
       let
         module-derivation = pkgs.stdenv.mkDerivation {
           name = unique-dependency.module_file.artifact_name;
@@ -172,7 +162,7 @@ let
   # the output of this function is a single derivation which contains all the dependencies
   # the input is the array of the nixified dependencies, which are fed into the conversion function
   # TODO: check if there is way to parallelize this, as this is a huge bottleneck on systems with more than 2 cores
-  gradle-dependency-maven-repo = pkgs.symlinkJoin { name = "maven-repo"; paths = (map conversion-function gradle-deps-nix.components); postBuild = "echo maven repository was built"; };
+  gradle-dependency-maven-repo = pkgs.symlinkJoin { name = "maven-repo"; paths = (map conversion-function gradle-deps-nix); postBuild = "echo maven repository was built"; };
 
   # idea taken from https://bmcgee.ie/posts/2023/02/nix-what-are-fixed-output-derivations-and-why-use-them/
   # gradle has a huge disliking for self fetched dependencies
@@ -234,5 +224,4 @@ in
   inherit mavenRepositoryToGradleInitScriptFunction;
   mvn-repo = gradle-dependency-maven-repo;
   gradle-init = mavenRepositoryToGradleInitScriptFunction gradle-dependency-maven-repo;
-  gradle-deps-json = gradle-deps-json;
 }
