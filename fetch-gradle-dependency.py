@@ -37,7 +37,7 @@ def download_artifact(_output_file, unprotected_maven_url_file, _name, _group, _
             # Construct the Maven2 URL for the current component
             package_url = f"{maven_url}/{component_identifier}"
 
-            print(f"Attempting to download {_artifact_name} for {_group}:{_name}:{_version} from {package_url}")
+            print(f"\nAttempting to download {_artifact_name} for {_group}:{_name}:{_version} from {package_url}")
 
             # Download the package
             response = requests.get(package_url, stream=True)
@@ -48,7 +48,7 @@ def download_artifact(_output_file, unprotected_maven_url_file, _name, _group, _
                     for chunk in response.iter_content(chunk_size=128):
                         _file.write(chunk)
                 print(
-                    f"\n Downloaded '{_artifact_name}' for {_group}:{_name}:{_version} from {maven_url} to local repository. \n Repo URL: {package_url}")
+                    f"\nDownloaded '{_artifact_name}' for {_group}:{_name}:{_version} from {maven_url} to local repository. \nRepo URL: {package_url}")
 
                 with open(_output_file, "rb") as f:
                     # Read and update hash string value in blocks of 4K
