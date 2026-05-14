@@ -56,8 +56,11 @@ def download_artifact(_output_file, unprotected_maven_url_file, _name, _group, _
                     for byte_block in iter(lambda: f.read(4096), b""):
                         sha256_hash.update(byte_block)
                     # Check if the computed hash matches the given hash
-                    if sha256_hash.hexdigest() == _sha256hash:
+                    current_dep_hash=sha256_hash.hexdigest()
+                    if current_dep_hash == _sha256hash:
                         return
+                    else
+                        print(f"\nHash mismatch: Expected: {_sha256hash}, got: {current_dep_hash}")
 
             else:
                 print(f"\nFailed to download '{_artifact_name}' for {_group}:{_name}:{_version} from {maven_url}.")
@@ -69,7 +72,7 @@ def download_artifact(_output_file, unprotected_maven_url_file, _name, _group, _
 if sys.argv[2] == "fetch-module":
     download_artifact(sys.argv[1], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6], sys.argv[7], sys.argv[8], sys.argv[9])
 else:
-    tmpdir = r'tmp' 
+    tmpdir = r'tmp'
     if not os.path.exists(tmpdir):
       os.makedirs(tmpdir)
     # resolve the module file first
