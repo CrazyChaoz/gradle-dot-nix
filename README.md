@@ -5,9 +5,6 @@ This flake provides a way to build gradle projects in sandboxed nix environments
 
 No configuration should be needed, just import the flake and use the provided outputs.
 
-Yes there are still IFDs left in the code. 
-If you have any idea how to get rid of them, please let me know or open a PR.
-
 Sample Project
 ---
 
@@ -159,16 +156,6 @@ I don't have any motivation to do that myself, but I would be happy to accept a 
 
 A starting point for that would be to convert the python scripts to bash scripts, as they are self-contained and don't do too much magic.
 
-IFDs
----
-
-There are several IFDs that (need to?) exist in the code.
-
-1. The `gradle/verification-metadata.xml` file gets read to determine the further derivations.
-There shouldn't be a way around this, as the dependencies are variable and the derivations thus need to be determined at runtime.
-2. `nixpkgs.symlinkJoin` collects multiple store paths into one.
-Store paths are not known before evaluation and need to be determined at runtime.
-
 Structure
 ---
 
@@ -191,4 +178,3 @@ License
 ---
 
 This flake is licensed under the MIT license. See the [LICENSE](./LICENSE) file for details.
-
