@@ -1,12 +1,21 @@
-import json
-import requests
 import hashlib
-import sys
+import json
 import os
+import sys
+
+import requests
 
 
-def download_artifact(_output_file, unprotected_maven_url_file, _name, _group, _version, _artifact_name, _artifact_dir,
-                      _sha256hash=None):
+def download_artifact(
+    _output_file,
+    unprotected_maven_url_file,
+    _name,
+    _group,
+    _version,
+    _artifact_name,
+    _artifact_dir,
+    _sha256hash=None,
+):
     """
     Download the artifact from the Maven2 repository
 
@@ -20,15 +29,19 @@ def download_artifact(_output_file, unprotected_maven_url_file, _name, _group, _
     :param _sha256hash: The SHA256 hash of the artifact
     :return: None
     """
-    print(f"Downloading {_artifact_name} for {_group}:{_name}:{_version} from {_artifact_dir}")
+    print(
+        f"Downloading {_artifact_name} for {_group}:{_name}:{_version} from {_artifact_dir}"
+    )
 
     # Number of attempts
     attempts = 0
 
-    component_identifier = f"{_group.replace('.', '/')}/{_name}/{_version}/{_artifact_name}"
+    component_identifier = (
+        f"{_group.replace('.', '/')}/{_name}/{_version}/{_artifact_name}"
+    )
 
     # Iterate through Maven2 URLs
-    with open(unprotected_maven_url_file, 'r') as unprotected_maven_url_file:
+    with open(unprotected_maven_url_file, "r") as unprotected_maven_url_file:
         maven_urls = json.load(unprotected_maven_url_file)
         for maven_url in maven_urls:
             # Increment the number of attempts
@@ -37,18 +50,20 @@ def download_artifact(_output_file, unprotected_maven_url_file, _name, _group, _
             # Construct the Maven2 URL for the current component
             package_url = f"{maven_url}/{component_identifier}"
 
-            print(f"\nAttempting to download {_artifact_name} for {_group}:{_name}:{_version} from {package_url}")
+            print(
+                f"\nAttempting to download {_artifact_name} for {_group}:{_name}:{_version} from {package_url}"
+            )
 
             # Download the package
             response = requests.get(package_url, stream=True)
 
             if response.status_code == 200:
-
-                with open(_output_file, 'wb') as _file:
+                with open(_output_file, "wb") as _file:
                     for chunk in response.iter_content(chunk_size=128):
                         _file.write(chunk)
                 print(
-                    f"\nDownloaded '{_artifact_name}' for {_group}:{_name}:{_version} from {maven_url} to local repository. \nRepo URL: {package_url}")
+                    f"\nDownloaded '{_artifact_name}' for {_group}:{_name}:{_version} from {maven_url} to local repository. \nRepo URL: {package_url}"
+                )
 
                 with open(_output_file, "rb") as f:
                     # Read and update hash string value in blocks of 4K
@@ -56,37 +71,68 @@ def download_artifact(_output_file, unprotected_maven_url_file, _name, _group, _
                     for byte_block in iter(lambda: f.read(4096), b""):
                         sha256_hash.update(byte_block)
                     # Check if the computed hash matches the given hash
-                    current_dep_hash=sha256_hash.hexdigest()
+                    current_dep_hash = sha256_hash.hexdigest()
                     if current_dep_hash == _sha256hash:
                         return
-                    else
-                        print(f"\nHash mismatch: Expected: {_sha256hash}, got: {current_dep_hash}")
+                    else:
+                        print(
+                            f"\nHash mismatch: Expected: {_sha256hash}, got: {current_dep_hash}"
+                        )
 
             else:
-                print(f"\nFailed to download '{_artifact_name}' for {_group}:{_name}:{_version} from {maven_url}.")
+                print(
+                    f"\nFailed to download '{_artifact_name}' for {_group}:{_name}:{_version} from {maven_url}."
+                )
                 if attempts == len(maven_urls):
                     print(
-                        f"\n\nERROR: Failed to download '{_artifact_name}' for {_group}:{_name}:{_version} from all Maven2 URLs !!!!\n\n")
+                        f"\n\nERROR: Failed to download '{_artifact_name}' for {_group}:{_name}:{_version} from all Maven2 URLs !!!!\n\n"
+                    )
 
 
 if sys.argv[2] == "fetch-module":
-    download_artifact(sys.argv[1], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6], sys.argv[7], sys.argv[8], sys.argv[9])
+    download_artifact(
+        sys.argv[1],
+        sys.argv[3],
+        sys.argv[4],
+        sys.argv[5],
+        sys.argv[6],
+        sys.argv[7],
+        sys.argv[8],
+        sys.argv[9],
+    )
 else:
-    tmpdir = r'tmp'
+    tmpdir = r"tmp"
     if not os.path.exists(tmpdir):
-      os.makedirs(tmpdir)
+        os.makedirs(tmpdir)
     # resolve the module file first
-    download_artifact('tmp/module_file.module', sys.argv[3], sys.argv[4], sys.argv[5],sys.argv[6], sys.argv[10], sys.argv[8])
+    download_artifact(
+        "tmp/module_file.module",
+        sys.argv[3],
+        sys.argv[4],
+        sys.argv[5],
+        sys.argv[6],
+        sys.argv[10],
+        sys.argv[8],
+    )
     # process the component
-    with open('tmp/module_file.module', 'r') as json_file:
+    with open("tmp/module_file.module", "r") as json_file:
         module_data = json.load(json_file)
         renaming_aliases = {}
-        for variant in module_data.get('variants', []):
-            for file in variant.get('files', []):
-                renaming_aliases[file['name']] = file['url']
+        for variant in module_data.get("variants", []):
+            for file in variant.get("files", []):
+                renaming_aliases[file["name"]] = file["url"]
 
         artifact_name = sys.argv[7]
         if renaming_aliases.get(artifact_name):
             artifact_name = renaming_aliases.get(artifact_name)
 
-        download_artifact(sys.argv[1], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6], artifact_name, sys.argv[8], sys.argv[9])
+        download_artifact(
+            sys.argv[1],
+            sys.argv[3],
+            sys.argv[4],
+            sys.argv[5],
+            sys.argv[6],
+            artifact_name,
+            sys.argv[8],
+            sys.argv[9],
+        )
